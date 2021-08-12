@@ -21,6 +21,7 @@ export default class AccountDatatable extends LightningElement {
     @api SFDCobjectApiName;
     @api fieldSetName;
     fieldName;
+    @api showfilter = false;
     listOfFieldsCopy = [];
     draftValues = [];
     AddButonCounter = 0;

@@ -29,11 +29,13 @@
                 <lightning-button label="Replace" onclick={handleReplace}>
                 </lightning-button>
             </div>
+            <template if:true = {showfilter}>
             <div class="slds-var-p-left_xx-small">
                 <c-filter fileds-list={fieldOptionJSON} onfiltercriteriachange={filterCriteriaChange}
                     ontakeactionchnage={takeactionChnage}>
                 </c-filter>
             </div>
+          </template>
             <div class="slds-var-p-left_x-small">
               <lightning-button  
                   label="Add" 
