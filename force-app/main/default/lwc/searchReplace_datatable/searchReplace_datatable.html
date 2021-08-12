@@ -1,0 +1,38 @@
+<template>
+    <lightning-card title="Datatable Search">
+        <div class="slds-var-m-around_medium">
+            <div class="demo-only demo-only--sizing slds-grid slds-wrap">
+                <div class="slds-size_3-of-12">
+                    <lightning-combobox label="Fields" value={FieldsValue} placeholder="Select Field"
+                        options={FieldsOptions} onchange={handleChangeFields}>
+                    </lightning-combobox>
+                </div>
+                <div class="slds-size_3-of-12 slds-var-p-left_x-small">
+                    <lightning-input type="search" onchange={handleKeyChange} class="slds-var-m-bottom_small"
+                        label="Search" value={searchKey}>
+                    </lightning-input>
+                </div>
+                <div class="slds-size_3-of-12 slds-var-p-left_x-small">
+                    <lightning-input type="text" label="Text to Replace" onchange={handelonchange} value={replacetext}>
+                    </lightning-input>
+                </div>
+                <div class="slds-size_3-of-12 slds-var-p-top_large slds-grid slds-wrap">
+                    <div class="slds-var-p-left_x-small">
+                        <lightning-button label="Replace" onclick={handleReplace}>
+                        </lightning-button>
+                    </div>
+                    <div class="slds-var-p-left_xx-small">
+                        <c-filter fileds-list={fieldOptionJSON} onfiltercriteriachange={filterCriteriaChange}
+                            ontakeactionchnage={takeactionChnage}>
+                        </c-filter>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <lightning-datatable key-field="Id" data={allData} columns={columns} show-row-number-column
+            hide-checkbox-column>
+        </lightning-datatable>
+
+    </lightning-card>
+
+</template>

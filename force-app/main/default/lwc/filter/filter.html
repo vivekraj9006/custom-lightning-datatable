@@ -1,0 +1,99 @@
+<template>
+    <div class="slds-var-p-left_xx-small">
+        <lightning-button-icon-stateful icon-name="utility:filterList" selected={filterState} onclick={handleFilter}
+            alternative-text="Filter">
+        </lightning-button-icon-stateful>
+        <div if:true={filterState} style="position: relative;">
+            <section class="slds-popover slds-popover_medium slds-popover_prompt_top-right slds-nubbin_top-right"
+                role="dialog">
+                <div class="demo-only-element"
+                    style="background-color:#fafaf9;position:relative;overflow:hidden;display:flex;flex-direction:row-reverse">
+                    <div class="slds-panel slds-size_medium slds-panel_docked slds-panel_docked-right slds-panel_drawer slds-is-open"
+                        aria-hidden="false" id="example-unique-id-72">
+                        <!-- CLOSE BUTTON     START-->
+                        <div class="slds-panel__header">
+                            <h2 class="slds-panel__header-title slds-text-heading_small slds-truncate" title="Filter">
+                                Filter</h2>
+                            <div class="slds-panel__header-actions">
+                                <lightning-button-icon icon-name="utility:close" variant="close"
+                                    alternative-text="Close Filter" title="Close Filter" onclick={closePopover}>
+                                </lightning-button-icon>
+                            </div>
+                        </div>
+                        <!-- CLOSE BUTTON     END-->
+                        <div class="slds-panel__body">
+                            <div class="slds-filters">
+                                <!-- FILTER CODE     START-->
+                                <div class="slds-grid slds-grid_vertical">
+                                    <div class="slds-col">
+                                        <lightning-combobox label="Resource" placeholder="Select..."
+                                            options={resourceOptions} onchange={handleResourceChange}>
+                                        </lightning-combobox>
+                                    </div>
+                                    <div class="slds-col">
+                                        <lightning-combobox label="Operator" placeholder="Select..."
+                                            options={operatorOptions} onchange={handleOperatorChange}
+                                            disabled={isOperatorDisabled}>
+                                        </lightning-combobox>
+                                    </div>
+                                    <div if:false={isDate} class="slds-col">
+                                        <lightning-input type="string" variant="standard" name="Value"
+                                            disabled={isValueDisabled} label="Value" onchange={onChangeInputValue}>
+                                        </lightning-input>
+                                    </div>
+                                    <div if:true={isDate} class="slds-col">
+                                        <lightning-input type="date" variant="standard" name="Value"
+                                            disabled={isValueDisabled} label="Value" onchange={onChangeInputValue}>
+                                        </lightning-input>
+                                    </div>
+                                    <div
+                                        class="slds-col slds-grid slds-gutters slds-var-p-top_small slds-p-bottom_x-small">
+                                        <div class="slds-col slds-align_absolute-center">
+                                            <lightning-button variant="neutral" label="Add" onclick={onAddFilter}>
+                                            </lightning-button>
+                                        </div>
+                                        <div class="slds-col slds-align_absolute-center slds-p-bottom_xx-small">
+                                            <lightning-button variant="destructive-text" label="Remove"
+                                                onclick={onRemoveAll}></lightning-button>
+                                        </div>
+                                        <div class="slds-col slds-align_absolute-center slds-p-bottom_large">
+                                            <lightning-combobox placeholder="Action" value={actionVal} options={takeActionOption}
+                                                onchange={onTakeAction}>
+                                            </lightning-combobox>
+                                        </div>
+                                    </div>
+                                </div>
+                                <h3 class="slds-text-body_small slds-var-m-vertical_x-small">Matching all these filters
+                                </h3>
+                                <!-- FOR EACH CODE     START-->
+                                <ul class="slds-list_vertical slds-list_vertical-space slds-scrollable_y"
+                                    style="height:16rem">
+                                    <template if:true={filterCriteriaList} for:each={filterCriteriaList}
+                                        for:item="filter">
+                                        <li class="slds-item slds-hint-parent" key={filter.id} id={filter.id}
+                                            onclick={onEditFilter}>
+                                            <div class="slds-filters__item slds-grid slds-grid_vertical-align-center">
+                                                <div class="slds-grow slds-has-blur-focus">
+                                                    <span
+                                                        class="slds-show slds-text-color_success">{filter.resourceName}:</span>
+                                                    <span class="slds-show">{filter.operatorName}</span>
+                                                    <span class="slds-show">{filter.value}</span>
+                                                </div>
+                                                <lightning-button-icon icon-name="utility:delete" name={filter.id}
+                                                    alternative-text="Delete" class="slds-var-m-left_xx-small"
+                                                    onclick={deleteFilter} title="Delete">
+                                                </lightning-button-icon>
+                                            </div>
+                                        </li>
+                                    </template>
+                                </ul>
+                                <!-- FOR EACH CODE     END-->
+                                <!-- FILTER CODE     END-->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </div>
+</template>
