@@ -325,9 +325,9 @@ export default class AccountDatatable extends LightningElement {
                     });
                 //getRecordNotifyChange([{ recordId: element.Id }]);
             });
-            setTimeout(() => {
-                this.connectedCallback();
-            }, 1000);
+            // setTimeout(() => {
+            //     this.connectedCallback();
+            // }, 1000);
         }
         else {
             let evt = new ShowToastEvent({
