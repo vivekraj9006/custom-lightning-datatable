@@ -9,7 +9,7 @@ import deleteRecords from '@salesforce/apex/picklistDatatableEditContoller.delet
 export default class AccountDatatable extends LightningElement {
     @api isLoaded = false;
     @track allData = []; // Datatable
-    allDataOrgCopy = []; // DatatableOrignalCpy
+    allDataOrgCopy = []; // DatatableOrignalCopy
     @track columns = [];
     @track searchKey = '';
     @track replacetext = [];
