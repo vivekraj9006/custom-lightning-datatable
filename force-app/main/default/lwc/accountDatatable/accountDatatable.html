@@ -1,60 +1,154 @@
 <template>
+
   <lightning-card>
+
     <template if:false={isLoading}>
       <div class="slds-m-around_medium">
-          <lightning-spinner
-              alternative-text="Loading..." 
-              variant="brand">
-          </lightning-spinner>
-        </div>
-      </template>
-      <div class="slds-var-m-around_medium">
+        <lightning-spinner alternative-text="Loading..."
+          variant="brand">
+        </lightning-spinner>
+      </div>
+    </template>
+
+    <div class="slds-var-m-around_medium">
+
       <div class="slds-grid slds-wrap">
-        <div class="slds-size_2-of-12">
-            <lightning-combobox label="Fields" value={FieldsValue} placeholder="Select Field"
-                options={FieldsOptions} onchange={handleChangeFields}>
+
+        <template if:true={showSearchAndReplace}>
+          <div class="slds-size_2-of-12">
+            <lightning-combobox label="Fields"
+              value={FieldsValue}
+              placeholder="Select Field"
+              options={FieldsOptions}
+              onchange={handleChangeFields}>
             </lightning-combobox>
-        </div>
-        <div class="slds-size_2-of-12 slds-var-p-left_x-small">
-            <lightning-input type="search" onchange={handleKeyChange} class="slds-var-m-bottom_small"
-                label="Search" value={searchKey}>
-            </lightning-input>
-        </div>
-        <div class="slds-size_2-of-12 slds-var-p-left_x-small">
-            <lightning-input type="text" label="Text to Replace" onchange={handelonchange} value={replacetext}>
-            </lightning-input>
-        </div>
+          </div>
+          <div class="slds-size_2-of-12 slds-var-p-left_x-small">
+            <template if:true={isDateType}>
+              <lightning-input type='date'
+                label="Search"
+                class="slds-var-m-bottom_small"
+                onchange={handleKeyChange}
+                value={searchKey}>
+              </lightning-input>
+            </template>
+            <template if:true={isDateTimeType}>
+              <lightning-input type='date'
+                label="Search"
+                class="slds-var-m-bottom_small"
+                onchange={handleKeyChange}
+                value={searchKey}>
+              </lightning-input>
+            </template>
+            <template if:true={isTimeType}>
+              <lightning-input type='time'
+                label="Search"
+                class="slds-var-m-bottom_small"
+                onchange={handleKeyChange}
+                value={searchKey}>
+              </lightning-input>
+            </template>
+            <template if:true={isStringType}>
+              <lightning-input type='text'
+                label="Search"
+                class="slds-var-m-bottom_small"
+                onchange={handleKeyChange}
+                value={searchKey}>
+              </lightning-input>
+            </template>
+          </div>
+          <div class="slds-size_2-of-12 slds-var-p-left_x-small">
+            <template if:true={isDateType}>
+              <lightning-input type='date'
+                label="Text to Replace"
+                onchange={handelonchange}
+                class="slds-var-m-bottom_small"
+                value={replacetext}>
+              </lightning-input>
+            </template>
+            <template if:true={isDateTimeType}>
+              <lightning-input type='date'
+                label="Text to Replace"
+                onchange={handelonchange}
+                class="slds-var-m-bottom_small"
+                value={replacetext}>
+              </lightning-input>
+            </template>
+            <template if:true={isTimeType}>
+              <lightning-input type='time'
+                label="Text to Replace"
+                onchange={handelonchange}
+                class="slds-var-m-bottom_small"
+                value={replacetext}>
+              </lightning-input>
+            </template>
+            <template if:true={isStringType}>
+              <lightning-input type='text'
+                label="Text to Replace"
+                onchange={handelonchange}
+                class="slds-var-m-bottom_small"
+                value={replacetext}>
+              </lightning-input>
+            </template>
+          </div>
+        </template>
+
         <div class="slds-size_6-of-12 slds-var-p-top_large slds-wrap slds-grid slds-grid_align-end">
+
+          <template if:true={showSearchAndReplace}>
             <div class="slds-var-p-left_x-small">
-                <lightning-button label="Replace" onclick={handleReplace}>
-                </lightning-button>
-            </div>
-            <template if:true = {showfilter}>
-            <div class="slds-var-p-left_xx-small">
-                <c-filter fileds-list={fieldOptionJSON} onfiltercriteriachange={filterCriteriaChange}
-                    ontakeactionchnage={takeactionChnage}>
-                </c-filter>
+              <lightning-button label="Replace"
+                onclick={handleReplace}>
+              </lightning-button>
             </div>
           </template>
-            <div class="slds-var-p-left_x-small">
-              <lightning-button  
-                  label="Add" 
-                  onclick={addRow}>
+
+          <template if:true={showfilter}>
+            <div class="slds-var-p-left_xx-small">
+              <c-filter fileds-list={fieldOptionJSON}
+                onfiltercriteriachange={filterCriteriaChange}
+                ontakeactionchnage={takeactionChnage}>
+              </c-filter>
+            </div>
+          </template>
+
+          <div class="slds-var-p-left_x-small">
+
+            <template if:true={showAddRow}>
+              <lightning-button label="Add"
+                onclick={addRow}>
               </lightning-button>
-             </div>
+            </template>
+          </div>
+
+          <div class="slds-var-p-left_x-small">
+
+            <template if:true={showDeleteBtn}>
+              <lightning-button label="Delete"
+                onclick={deleteRecordBtn}>
+              </lightning-button>
+            </template>
+          </div>
+
         </div>
+
+      </div>
     </div>
-  </div>
-    <div class="slds-m-around_medium">
-      <c-extended-data-table
-        key-field="Id"
+
+    <div class="slds-m-around_medium"
+      style="height:310px">
+
+      <c-extended-data-table key-field="Id"
         data={allData}
         columns={columns}
-        hide-checkbox-column
         draft-values={draftValues}
         onsave={handleSave}
+        oncancel={handleCancel}
         oncellchange={handleCellChange}
-        onpicklistchanged={picklistChanged}>
+        onpicklistchanged={picklistChanged}
+        onloadmore={loadMoreData}
+        enable-infinite-loading
+        onrowselection={handleRowSelection}>
       </c-extended-data-table>
     </div>
   </lightning-card>

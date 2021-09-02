@@ -1,12 +1,26 @@
 {
-  "packageDirectories": [
-    {
-      "path": "force-app",
-      "default": true
+    "packageDirectories": [
+        {
+            "path": "force-app",
+            "default": true,
+            "package": "lightning-datatable-1",
+            "versionName": "ver 0.1",
+            "versionNumber": "0.1.0.NEXT"
+        },
+        {
+            "path": "force-app",
+            "package": "lightning-datatable-2",
+            "versionName": "ver 0.1",
+            "versionNumber": "0.1.0.NEXT",
+            "default": false
+        }
+    ],
+    "name": "lightning-datatable-pro",
+    "namespace": "",
+    "sfdcLoginUrl": "https://login.salesforce.com",
+    "sourceApiVersion": "52.0",
+    "packageAliases": {
+        "lightning-datatable-1": "0Ho5g00000000V1CAI",
+        "lightning-datatable-2": "0Ho5g00000000V6CAI"
     }
-  ],
-  "name": "lightning-datatable-pro",
-  "namespace": "",
-  "sfdcLoginUrl": "https://login.salesforce.com",
-  "sourceApiVersion": "52.0"
 }

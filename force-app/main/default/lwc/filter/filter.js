@@ -220,7 +220,6 @@ export default class Filter extends LightningElement {
     {
         console.log('event.currentTarget.id:', event.currentTarget.id);
         console.log('event.currentTarget.dataset.id:', event.currentTarget.dataset.id);
-        console.log('event.Target.id:', event.target.id);
         console.log('event.Target.dataset.id:', event.target.dataset.id);
     }
 

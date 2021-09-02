@@ -11,9 +11,13 @@
     </targets>
     <targetConfigs>
         <targetConfig targets="lightning__RecordPage,lightning__AppPage,lightning__HomePage ">
-            <property name="SFDCobjectApiName" label="Related Object API Name" type="String" default="" />
+            <property name="SFDCobjectApiName" label="SObject Name" type="String" default="" />
             <property name="fieldSetName" label="Field Set Name" type="String" default="" />
-            <property name="showfilter" type="Boolean" label="Filter select" default="false"/>
+            <property name="showfilter" label="DataTable Custom Filter" type="Boolean" default="true"/>
+            <property name="showSearchAndReplace" label="Search and Replace Field" type="Boolean" default="true"/>
+            <property name="showAddRow" label="Add New Row Button" type="Boolean" default="true"/>
+            <property name="showDeleteBtn" label="Add Delete Button" type="Boolean" default="true"/>
+            <property name="NumberRows" label="Number of Rows Display" type="String" default="10"/>
         </targetConfig>
     </targetConfigs>
 </LightningComponentBundle>

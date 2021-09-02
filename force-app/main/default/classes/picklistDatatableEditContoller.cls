@@ -1,7 +1,14 @@
 public with sharing class picklistDatatableEditContoller
 {
+
+    /**
+     * @description       : Method is used for updating the record after datatable is updated
+     * @param             : String strObjectApiName,String strfieldSetName,Integer limitSize,Integer offset
+     * @return            : string,Integer
+     * @author            : Vrushabh Uprikar
+    **/
     @AuraEnabled
-    public static string getUpdatedDataOnly(String strObjectApiName, String strfieldSetName)
+    public static string getUpdatedDataOnly(String strObjectApiName, String strfieldSetName, Integer limitSize, Integer offset)
     {
         Map<String, String> returnMap = new Map<String,String>();
         if(!String.isEmpty(strObjectApiName) && !String.isEmpty(strfieldSetName))
@@ -17,7 +24,7 @@ public with sharing class picklistDatatableEditContoller
                 query += f.getFieldPath() + ', '; // getFieldPath() of FieldSetMember gives the fieldAPI which has been used to build SOQL query.
             }
             query += 'Id FROM ' + strObjectApiName ;
-            query += ' order by CreatedDate desc LIMIT 10 ';
+            query += ' ORDER BY LastModifiedDate DESC LIMIT '+limitSize + ' OFFSET '+ offset ;
 	        //execute query
             List<SObject> lstRecords = Database.query(query);
             //prepare a map which will hold fieldList and recordList and return it
@@ -27,8 +34,16 @@ public with sharing class picklistDatatableEditContoller
         return null; // will return null if ObjectApi and FieldSet not found
     }
 
+    /**
+     * @description       : returns initial Records, coloums And Picklist values in the map format
+     * @param             : String strObjectApiName,String strfieldSetName,String dynamicLimit
+     * @return            : string
+     * @author            : Vivek Raj
+     * @last modified on  : 25-08-2021
+     * @last modified by  : Vrushabh Uprikar
+    **/
     @AuraEnabled(cacheable=false)
-    public static String getFieldSetAndRecords(String strObjectApiName, String strfieldSetName)
+    public static String getFieldSetAndRecords(String strObjectApiName, String strfieldSetName, String dynamicLimit)
     {
         Map<String, String> returnMap = new Map<String,String>();
         if(!String.isEmpty(strObjectApiName) && !String.isEmpty(strfieldSetName))
@@ -39,32 +54,62 @@ public with sharing class picklistDatatableEditContoller
                 sObj.getSObjectType().getDescribe().fieldSets.getMap().get(strfieldSetName).getFields(); // Collecting all fields from fildSet
             //prepare SOQL query based on fieldAPIs
             String query = 'SELECT ';
-            List<List<PickListWrap>> piclist = new List<List<PickListWrap>>(); // Picklist values with fieldApi Name
+            List<Map<String,List<PickListWrap>>> piclist = new List<Map<String,List<PickListWrap>>>(); // Picklist values with fieldApi Name Map
+            List<Map<Schema.sObjectField, Map<String, List<PickListWrap>>>> DPickList = new List<Map<Schema.sObjectField, Map<String, List<PickListWrap>>>>();
             for(Schema.FieldSetMember f : lstFSMember) //Use of Schema.FieldSetMember to get the fields from Field Set.
             {
                 query += f.getFieldPath() + ', '; // getFieldPath() of FieldSetMember gives the fieldAPI which has been used to build SOQL query.
  				if(f.getType() == Schema.DisplayType.Picklist)
                 {
-                    String fpath = (String)f.getFieldPath();
-                    piclist.add(getPicklistOptions(strObjectApiName,fpath));
-                    system.debug(piclist);
+                    String sObjfield = (String)(strObjectApiName + '.'+f.getFieldPath()); // String to Schema.SobjectField
+                    List<String> splitString = sObjfield.split('\\.');
+                    Schema.SobjectField theField = Schema.getGlobalDescribe().get(splitString[0]).getDescribe().fields.getMap().get(splitString[1]);
+                    
+                    Map<Schema.sObjectField, Map<String, List<PickListWrap>>> depPickListValues = new Map<Schema.sObjectField, Map<String, List<PickListWrap>>>(); // Collect Dependent PickLIst Values
+                    depPickListValues = getDependentPicklistValues(theField);
+                    System.debug('depPickListValues '+ depPickListValues);
+                    if(depPickListValues == null || depPickListValues.isEmpty())
+                    {
+                        String fpath = (String)f.getFieldPath();
+                        piclist.add(getPicklistOptions(strObjectApiName,fpath));
+                        System.debug('piclist' + piclist);
+                    }else {
+                        DPickList.add(depPickListValues);
+                    }
                 }
             }
             query += 'Id FROM ' + strObjectApiName ;
-            query += ' order by CreatedDate desc LIMIT 10 ';
+            if(dynamicLimit == '0')
+            {
+                query += ' ORDER BY LastModifiedDate DESC LIMIT 10';
+            }else if(dynamicLimit == null || dynamicLimit == '')
+            {
+                query += ' ORDER BY LastModifiedDate DESC LIMIT 10';
+            }else {
+                query += ' ORDER BY LastModifiedDate DESC LIMIT'+ dynamicLimit;
+            }
+            
 	        //execute query
             List<SObject> lstRecords = Database.query(query);
             //prepare a map which will hold fieldList and recordList and return it
             returnMap.put('FIELD_LIST', JSON.serialize(lstFSMember));
             returnMap.put('RECORD_LIST', JSON.serialize(lstRecords));
             returnMap.put('PICKVAL_LIST', JSON.serialize(piclist));
+            returnMap.put('D_PICKVAL_LIST', JSON.serialize(DPickList));
 
             return JSON.serialize(returnMap);
         }
         return null; // will return null if ObjectApi and FieldSet not found
     }
 
-
+    /**
+     * @description       : Its updates the draft values in the inline editing datable
+     * @param             : String jSONSObject,String sObjectApiName
+     * @return            : string
+     * @author            : Vivek Raj
+     * @last modified on  : 25-08-2021
+     * @last modified by  : Vrushabh Uprikar
+    **/
     @AuraEnabled
     public static String upsertSOBJRecord(String jSONSObject, String sObjectApiName)
     {
@@ -81,13 +126,26 @@ public with sharing class picklistDatatableEditContoller
             {
                 Object value = fieldMap.get(key);
                 Schema.DisplayType valueType = targetFields.get(key).getDescribe().getType();
+                System.debug('valueType: ' + valueType);
                 if (value instanceof String && valueType != Schema.DisplayType.String)
                 {
                     String svalue = (String)value;
                     if (valueType == Schema.DisplayType.Date)
-                        newSobject.put(key, Date.valueOf(svalue));
-                    else if(valueType == Schema.DisplayType.DateTime)
+                    {    
+                        String month;
+                        String year;
+                        String day;
+                        year = svalue.substring(0,4);
+                        month = svalue.substring(5,7);
+                        day = svalue.substring(8,10);
+                        Date myDate = Date.newInstance(integer.valueOf(year),integer.valueOf(month),integer.valueOf(day));
+                        newSobject.put(key, myDate);
+                    } else if(valueType == Schema.DisplayType.DateTime)
+                    {
+                        svalue = svalue.replace('T',' ');
+                        svalue = svalue.replace('Z','');
                         newSobject.put(key, DateTime.valueOfGmt(svalue));
+                    } 
                     else if (valueType == Schema.DisplayType.Percent || valueType == Schema.DisplayType.Currency)
                         newSobject.put(key, svalue == '' ? null : Decimal.valueOf(svalue));
                     else if (valueType == Schema.DisplayType.Double)
@@ -117,46 +175,66 @@ public with sharing class picklistDatatableEditContoller
         }
     }
 
-
-    public static List<PickListWrap> getPicklistOptions(String objectApiName, String fieldApiName)
+    /**
+     * @description       : Getting the Picklist values from the fieldset
+     * @param             : String objectApiName,String fieldApiName
+     * @return            : string
+     * @author            : Vrushabh Uprikar
+     * @last modified on  : 25-08-2021
+     * @last modified by  : Vrushabh Uprikar
+    **/
+    public static Map<String,List<PickListWrap>> getPicklistOptions(String objectApiName, String fieldApiName)
     { // Eg. Account, Type(FieldApiName)
-        List<String> picklistOptions = new List<String>();
+
+        //List<String> picklistOptions = new List<String>();
         List<PickListWrap> PickListWrapList = new List<PickListWrap>();
-        try {
-            Schema.SObjectType obj_describe = Schema.getGlobalDescribe().get(objectApiName) ;
-            Schema.DescribeSObjectResult obj_describe_result = obj_describe.getDescribe() ;
-            Map<String,Schema.SObjectField> fields = obj_describe_result.fields.getMap() ;
+        Map<String,List<PickListWrap>> PickListWrapMap = new Map<String,List<PickListWrap>>();
+        try 
+        {
+            Schema.SObjectType obj_describe = Schema.getGlobalDescribe().get(objectApiName);
+            Schema.DescribeSObjectResult obj_describe_result = obj_describe.getDescribe();
+            Map<String,Schema.SObjectField> fields = obj_describe_result.fields.getMap();
             Schema.DescribeFieldResult fieldResult = fields.get(fieldApiName).getDescribe();
             List<Schema.PicklistEntry> ple = fieldResult.getPicklistValues();
             for (Schema.PicklistEntry pickListVal : ple)
             {
                 String option = pickListVal.getValue();
-                PickListWrapList.add(new PickListWrap(pickListVal.getLabel(),pickListVal.getValue(), fieldApiName));
-                picklistOptions.add(option);
+                PickListWrapList.add(new PickListWrap(pickListVal.getLabel(),pickListVal.getValue()));
+                //picklistOptions.add(option);
             }
+
+            PickListWrapMap.put(fieldApiName, PickListWrapList);
+
         } catch (Exception ex)
         {
             throw new AuraHandledException(ex.getMessage());
         }
-        return PickListWrapList;
+        return PickListWrapMap;
     }
 
-    public class PickListWrap
-    {
+    public class PickListWrap{
         @AuraEnabled public String label;
         @AuraEnabled public String value;
-        @AuraEnabled public String fieldApi;
-        public PickListWrap(String label, String value, String fieldApi)
-        {
+        
+        public PickListWrap(String label, String value){
         	this.value = value;
             this.label = label;
-            this.fieldApi = fieldApi;
-
         }
     }
     
-      @AuraEnabled
-    public static String updateRecords(String strObjectApiName, String Record_Id, String Replace_text, String Replace_field, String field_type){
+
+    /**
+     * @description       : updates the data when replace funtionality is called.
+     * @param             : String strObjectApiName,String Record_Id,Replace_text,Replace_field,field_type
+     * @return            : string
+     * @author            : Vrushabh Uprikar
+     * @last modified on  : 25-08-2021
+     * @last modified by  : Vrushabh Uprikar
+    **/ 
+    @AuraEnabled
+    public static String updateRecords(String strObjectApiName, String Record_Id, 
+                                    String Replace_text, String Replace_field, String field_type)
+    {
         if(!String.isEmpty(Record_Id) && !String.isEmpty(Replace_text))
         {
             //get fields from FieldSet
@@ -164,9 +242,28 @@ public with sharing class picklistDatatableEditContoller
 			sObj.Id = Record_Id;
             if(field_type == 'double')
             {
-                Decimal myDecimal = decimal.valueOf(Replace_text);
-                sObj.put(Replace_field,myDecimal);
-            }else {
+                Integer myInt = Integer.valueOf(Replace_text);
+                System.debug('myInt: ' + myInt);
+                sObj.put(Replace_field,myInt);
+            }else if(field_type == 'date')
+            {
+                String month;
+                String year;
+                String day;
+                year = Replace_text.substring(0,4);
+                month = Replace_text.substring(5,7);
+                day = Replace_text.substring(8,10);
+                Date myDate = Date.newInstance(integer.valueOf(year),integer.valueOf(month),integer.valueOf(day));
+                sObj.put(Replace_field,myDate);
+
+            }else if(field_type == 'datetime')
+            {
+                Datetime dt1 = Datetime.valueOf(Replace_text);
+                System.debug(' Parsed DateTime is ' + dt1 );
+                sObj.put(Replace_field,dt1);
+
+            }else 
+            {
                 sObj.put(Replace_field,Replace_text);
             }
 			                               
@@ -184,17 +281,95 @@ public with sharing class picklistDatatableEditContoller
         return 'Something Went Wrong';
     }
 
+
+    /**
+     * @description       : Funtionality is used for deleting the Records.
+     * @param             : idlist
+     * @return            : string
+     * @author            : Vrushabh Uprikar
+     * @last modified on  : 25-08-2021
+     * @last modified by  : Vrushabh Uprikar
+    **/
     @AuraEnabled
-	public static string updateAccounts(Object data) {
-    //Schema.SObjectType sObjectType = Schema.getGlobalDescribe().get(sObjectApiName);
-    //String ListType = 'List<' + sObjectType + '>';
-    List<Account> accountsForUpdate = (List<Account>)JSON.deserialize(JSON.serialize(data),List<Account>.class);
-    try {
-        upsert accountsForUpdate;
-        return 'Success: account updated successfully';
-    	}
-    catch (Exception e) {
-        return 'The following exception has occurred: ' + e.getMessage();
-    	}
-	}
+    public static string deleteRecords(List<Id> idlist)
+    {
+        try 
+        {
+            Database.DeleteResult[] deleteResults = Database.delete( idlist, true );
+            return 'Success';
+            
+        } catch (Exception e) 
+        {
+            return ''+e.getMessage();
+        }
+    }
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+public static Map<Schema.sObjectField, Map<String, List<PickListWrap>>> getDependentPicklistValues(Schema.sObjectField dependToken) 
+{
+    Schema.DescribeFieldResult depend = dependToken.getDescribe();
+    //controlling picklist field
+    Schema.sObjectField controlToken = depend.getController();
+    System.debug('controlToken: ' + controlToken);
+    if (controlToken == null) 
+    {
+        return null;
+    }
+ 
+    Schema.DescribeFieldResult control = controlToken.getDescribe();
+    List<Schema.PicklistEntry> controlEntries;
+    if(control.getType() != Schema.DisplayType.Boolean)
+    {
+        controlEntries = control.getPicklistValues();
+    }
+ 
+    String base64map = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
+    Map<String,List<String>> dependentPicklistValues = new Map<String,List<String>>();
+    for (Schema.PicklistEntry entry : depend.getPicklistValues()) 
+    {
+        if (entry.isActive() && String.isNotEmpty(String.valueOf(((Map<String,Object>) JSON.deserializeUntyped(JSON.serialize(entry))).get('validFor'))))
+        {
+            List<String> base64chars =
+                    String.valueOf(((Map<String,Object>) JSON.deserializeUntyped(JSON.serialize(entry))).get('validFor')).split('');
+            for (Integer index = 0; index < (controlEntries != null ? controlEntries.size() : 2); index++)
+            {
+                // each of picklist value of controlling picklist
+                Object controlValue =
+                        (controlEntries == null
+                                ?   (Object) (index == 1)
+                                :   (Object) (controlEntries[index].isActive() ? controlEntries[index].getLabel() : null)
+                        );
+                Integer bitIndex = index / 6;
+                if (bitIndex > base64chars.size() - 1)
+                {
+                    break;
+                }
+                Integer bitShift = 5 - Math.mod(index, 6);
+                if  (controlValue == null || (base64map.indexOf( base64chars[ bitIndex ] ) & (1 << bitShift)) == 0)
+                    continue;
+                if (!dependentPicklistValues.containsKey((String) controlValue))
+                {
+                    dependentPicklistValues.put((String) controlValue, new List<String>());
+                }
+                dependentPicklistValues.get((String) controlValue).add(entry.getLabel());
+                // System.debug('controlValue: ' + controlValue);
+            }
+        }
+    }
+    
+    Map<String, List<PickListWrap>> aaaMap = new Map<String, List<PickListWrap>>();
+    for(String key :dependentPicklistValues.keySet()){
+        List<PickListWrap> picklistL = new List<PickListWrap>();
+        for(String key1 : dependentPicklistValues.get(key))
+        {
+            picklistL.add(new PickListWrap(key1, key1));
+        }
+        aaaMap.put(key, picklistL);
+    }
+    Map<Schema.sObjectField, Map<String, List<PickListWrap>>> D_values = new Map<Schema.sObjectField, Map<String, List<PickListWrap>>>();
+    D_values.put(controlToken,aaaMap);
+    return D_values;
+}
+
 }
