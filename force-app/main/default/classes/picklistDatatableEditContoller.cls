@@ -55,7 +55,7 @@ public with sharing class picklistDatatableEditContoller
             //prepare SOQL query based on fieldAPIs
             String query = 'SELECT ';
             List<Map<String,List<PickListWrap>>> piclist = new List<Map<String,List<PickListWrap>>>(); // Picklist values with fieldApi Name Map
-            List<Map<Schema.sObjectField, Map<String, List<PickListWrap>>>> DPickList = new List<Map<Schema.sObjectField, Map<String, List<PickListWrap>>>>();
+            List<Map<Schema.sObjectField,Map<String, Map<String, List<PickListWrap>>>>> DPickList = new List<Map<Schema.sObjectField,Map<String, Map<String, List<PickListWrap>>>>>();
             for(Schema.FieldSetMember f : lstFSMember) //Use of Schema.FieldSetMember to get the fields from Field Set.
             {
                 query += f.getFieldPath() + ', '; // getFieldPath() of FieldSetMember gives the fieldAPI which has been used to build SOQL query.
@@ -65,11 +65,11 @@ public with sharing class picklistDatatableEditContoller
                     List<String> splitString = sObjfield.split('\\.');
                     Schema.SobjectField theField = Schema.getGlobalDescribe().get(splitString[0]).getDescribe().fields.getMap().get(splitString[1]);
                     
-                    Map<Schema.sObjectField, Map<String, List<PickListWrap>>> depPickListValues = new Map<Schema.sObjectField, Map<String, List<PickListWrap>>>(); // Collect Dependent PickLIst Values
+                    Map<Schema.sObjectField,Map<String, Map<String, List<PickListWrap>>>> depPickListValues = new Map<Schema.sObjectField,Map<String, Map<String, List<PickListWrap>>>>(); // Collect Dependent PickLIst Values
                     depPickListValues = getDependentPicklistValues(theField);
                     System.debug('depPickListValues '+ depPickListValues);
                     if(depPickListValues == null || depPickListValues.isEmpty())
-                    {
+                    {	
                         String fpath = (String)f.getFieldPath();
                         piclist.add(getPicklistOptions(strObjectApiName,fpath));
                         System.debug('piclist' + piclist);
@@ -306,9 +306,12 @@ public with sharing class picklistDatatableEditContoller
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-public static Map<Schema.sObjectField, Map<String, List<PickListWrap>>> getDependentPicklistValues(Schema.sObjectField dependToken) 
+public static Map<Schema.sObjectField,Map<String, Map<String, List<PickListWrap>>>> getDependentPicklistValues(Schema.sObjectField dependToken) 
 {
     Schema.DescribeFieldResult depend = dependToken.getDescribe();
+    //dependent picklist filed
+    String dependenttoken = depend.getName();
+    System.debug('dependenttoken: ' + dependenttoken);
     //controlling picklist field
     Schema.sObjectField controlToken = depend.getController();
     System.debug('controlToken: ' + controlToken);
@@ -318,10 +321,12 @@ public static Map<Schema.sObjectField, Map<String, List<PickListWrap>>> getDepen
     }
  
     Schema.DescribeFieldResult control = controlToken.getDescribe();
+    //System.debug('control:'+ control);
     List<Schema.PicklistEntry> controlEntries;
     if(control.getType() != Schema.DisplayType.Boolean)
     {
         controlEntries = control.getPicklistValues();
+        
     }
  
     String base64map = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
@@ -353,7 +358,7 @@ public static Map<Schema.sObjectField, Map<String, List<PickListWrap>>> getDepen
                     dependentPicklistValues.put((String) controlValue, new List<String>());
                 }
                 dependentPicklistValues.get((String) controlValue).add(entry.getLabel());
-                // System.debug('controlValue: ' + controlValue);
+                 //System.debug('controlValue: ' + controlValue);
             }
         }
     }
@@ -367,9 +372,14 @@ public static Map<Schema.sObjectField, Map<String, List<PickListWrap>>> getDepen
         }
         aaaMap.put(key, picklistL);
     }
-    Map<Schema.sObjectField, Map<String, List<PickListWrap>>> D_values = new Map<Schema.sObjectField, Map<String, List<PickListWrap>>>();
-    D_values.put(controlToken,aaaMap);
-    return D_values;
+    Map<String, Map<String, List<PickListWrap>>> D_values = new Map<String, Map<String, List<PickListWrap>>>();
+    D_values.put(dependenttoken,aaaMap);
+    Map<Schema.sObjectField, String> depMaping = new Map<Schema.sObjectField,String>();
+    depMaping.put(controlToken,dependenttoken);
+    System.debug('depMaping'+ depMaping);
+    Map<Schema.sObjectField,Map<String, Map<String, List<PickListWrap>>>> dpMap = new Map<Schema.sObjectField,Map<String, Map<String, List<PickListWrap>>>>();
+    dpMap.put(controlToken, D_values);
+    return dpMap;
 }
 
 }
