@@ -6,7 +6,7 @@ public with sharing class picklistDatatableEditContoller
      * @param             : String strObjectApiName,String strfieldSetName,Integer limitSize,Integer offset
      * @return            : string,Integer
      * @author            : Vrushabh Uprikar
-     * @last modified on  : 02-09-2021
+     * @last modified on  : 03-09-2021
      * @last modified by  : Vrushabh Uprikar
     **/
     @AuraEnabled
@@ -41,7 +41,7 @@ public with sharing class picklistDatatableEditContoller
      * @param             : String strObjectApiName,String strfieldSetName,String dynamicLimit
      * @return            : string
      * @author            : Vivek Raj
-     * @last modified on  : 02-09-2021
+     * @last modified on  : 03-09-2021
      * @last modified by  : Vrushabh Uprikar
     **/
     @AuraEnabled(cacheable=false)
@@ -58,6 +58,7 @@ public with sharing class picklistDatatableEditContoller
             String query = 'SELECT ';
             List<Map<String,List<PickListWrap>>> piclist = new List<Map<String,List<PickListWrap>>>(); // Picklist values with fieldApi Name Map
             List<Map<Schema.sObjectField, Map<String, List<PickListWrap>>>> DPickList = new List<Map<Schema.sObjectField, Map<String, List<PickListWrap>>>>();
+            List<Map<String, String>> dependentPIckListMapList = new List<Map<String, String>>();
             for(Schema.FieldSetMember f : lstFSMember) //Use of Schema.FieldSetMember to get the fields from Field Set.
             {
                 query += f.getFieldPath() + ', '; // getFieldPath() of FieldSetMember gives the fieldAPI which has been used to build SOQL query.
@@ -69,7 +70,9 @@ public with sharing class picklistDatatableEditContoller
                     
                     Map<Schema.sObjectField, Map<String, List<PickListWrap>>> depPickListValues = new Map<Schema.sObjectField, Map<String, List<PickListWrap>>>(); // Collect Dependent PickLIst Values
                     depPickListValues = getDependentPicklistValues(theField);
+                    dependentPIckListMapList.add(getDependencyMap(theField));
                     System.debug('depPickListValues '+ depPickListValues);
+                    System.debug('dependentPIckListMapList '+ dependentPIckListMapList);
                     if(depPickListValues == null || depPickListValues.isEmpty())
                     {
                         String fpath = (String)f.getFieldPath();
@@ -94,7 +97,8 @@ public with sharing class picklistDatatableEditContoller
             returnMap.put('RECORD_LIST', JSON.serialize(lstRecords));
             returnMap.put('PICKVAL_LIST', JSON.serialize(piclist));
             returnMap.put('D_PICKVAL_LIST', JSON.serialize(DPickList));
-
+            returnMap.put('PICKVAL_DEPENDENGT_MAP', JSON.serialize(dependentPIckListMapList));
+           
             return JSON.serialize(returnMap);
         }
         return null; // will return null if ObjectApi and FieldSet not found
@@ -105,7 +109,7 @@ public with sharing class picklistDatatableEditContoller
      * @param             : String jSONSObject,String sObjectApiName
      * @return            : string
      * @author            : Vivek Raj
-     * @last modified on  : 02-09-2021
+     * @last modified on  : 03-09-2021
      * @last modified by  : Vrushabh Uprikar
     **/
     @AuraEnabled
@@ -178,7 +182,7 @@ public with sharing class picklistDatatableEditContoller
      * @param             : String objectApiName,String fieldApiName
      * @return            : string
      * @author            : Vrushabh Uprikar
-     * @last modified on  : 02-09-2021
+     * @last modified on  : 03-09-2021
      * @last modified by  : Vrushabh Uprikar
     **/
     public static Map<String,List<PickListWrap>> getPicklistOptions(String objectApiName, String fieldApiName)
@@ -226,7 +230,7 @@ public with sharing class picklistDatatableEditContoller
      * @param             : String strObjectApiName,String Record_Id,Replace_text,Replace_field,field_type
      * @return            : string
      * @author            : Vrushabh Uprikar
-     * @last modified on  : 02-09-2021
+     * @last modified on  : 03-09-2021
      * @last modified by  : Vrushabh Uprikar
     **/ 
     @AuraEnabled
@@ -284,7 +288,7 @@ public with sharing class picklistDatatableEditContoller
      * @param             : idlist
      * @return            : string
      * @author            : Vrushabh Uprikar
-     * @last modified on  : 02-09-2021
+     * @last modified on  : 03-09-2021
      * @last modified by  : Vrushabh Uprikar
     **/
     @AuraEnabled
@@ -370,4 +374,26 @@ public with sharing class picklistDatatableEditContoller
         System.debug('D_values: ' + D_values);
         return D_values;
     }
+
+
+    // by Vivek for geting map of dependency 
+    public static Map<String, String> getDependencyMap(Schema.sObjectField dependToken)
+    {
+        Schema.DescribeFieldResult depend = dependToken.getDescribe();
+        //dependent picklist filed
+        String dependenttoken = depend.getName();
+        //controller picklist filed
+        Schema.sObjectField controlToken = depend.getController();
+        Map<String, String> dependecyMap = new Map<String, String>();
+        if(controlToken == null)
+        {
+            // DO NOTHING
+            // String testString = 'NULL_VALUE';
+            // dependecyMap.put(testString,dependenttoken);
+        }else {
+            dependecyMap.put(controlToken+'',dependenttoken);
+        }
+        return dependecyMap;  
+    }
+
 }
