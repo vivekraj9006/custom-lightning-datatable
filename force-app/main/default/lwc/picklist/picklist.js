@@ -1,13 +1,7 @@
-/**
- * @author            : Vrushabh Uprikar
- * @last modified on  : 27-07-2021
- * @last modified by  : Vrushabh Uprikar
-**/
-import { LightningElement, api,track } from 'lwc';
+import { LightningElement, api, track } from 'lwc';
 const areSame = (obj1, obj2) => obj1 === obj2;
 
-export default class Picklist extends LightningElement
-{
+export default class Picklist extends LightningElement {
 
     @api label;
     @api placeholder;
@@ -15,73 +9,79 @@ export default class Picklist extends LightningElement
     @api value;
     @api context; // nothing but account ID , object ID
     @api apiname;
-    @api depvalue;
-    tempObj = {label:'None', value:'None'};
-    @track final_dep_op;
-    connectedCallback()
-    {
-        //console.log('depvalue', JSON.stringify(this.final_dep_op));
-        
-        this.final_dep_op = this.depvalue;
-        console.log('depvalue', JSON.stringify(this.depvalue));
-        
-        if(this.value === undefined)
-        {
+
+    @api dependentoption;
+    @api dependentvalue;
+    @api childapi;
+    @track disp_Opt=[];
+
+    tempObj = { label: 'None', value: 'None' };
+    /**
+     * @description       : To Retrive And load the Picklist values.
+     * @author            : Vivek Raj
+     * @last modified on  : 02-09-2021
+    **/
+    connectedCallback() {
+
+        console.log('dependentoption : ' + JSON.stringify(this.dependentoption));
+        console.log('dependentvalue : ' + JSON.stringify(this.dependentvalue));
+        console.log('child Api : ' + JSON.stringify(this.childapi));
+        if (this.value === undefined) {
             this.tempObj.isSelected = true;
-        }else
-        {
+        } else {
             this.tempObj.isSelected = false;
         }
-        // console.log(JSON.stringify(this.tempObj));
+
         this.options = this.options.map(option =>
-            Object.assign({}, option, {isSelected : areSame(option.value, this.value)}));
+            Object.assign({}, option, { isSelected: areSame(option.value, this.value) }));
         this.options.unshift(this.tempObj);
-        console.log('option id',JSON.stringify(this.options));
 
-        // this.depvalue = this.depvalue.map(option =>
-        //     Object.assign({}, option, {isSelected : areSame(option.value, this.value)}));
-        //this.depvalue.unshift(this.tempObj);
-        // console.log('depvalue id',JSON.stringify(this.depvalue));
-       // console.log('Field api name : ', this.apiname);
+        console.log('this.dependentoption bfore: ', JSON.stringify(this.dependentoption));
+        if (this.value === undefined) {
+            this.tempObj.isSelected = true;
+            this.disp_Opt.push(this.tempObj);
+        }else{
+            this.disp_Opt = this.dependentoption[this.childapi][this.value];
+        }
 
-        // console.log('options list ===> ',JSON.stringify(this.options));
+    
+        console.log('this.options  ' + JSON.stringify(this.options));
+        console.log(' this.disp_Opt ' + JSON.stringify(this.disp_Opt));
+        console.log('this.dependentoption after: ', JSON.stringify(this.dependentoption));
     }
 
-    updateDependentOptions(){
-
-     }
-
-    handleChange(event) {
+    /**
+     * @description       : 
+     * @author            : Vivek Raj
+     * @last modified on  : 02-09-2021
+    **/
+    handleChange(event) 
+    {
         //show the selected value on UI
         this.value = event.target.value;
-        console.log("Value from datatable is "+this.value)
-        console.log("Context of this value is : "+this.context);
+        console.log("Value from datatable is " + this.value)
+        console.log("Context of this value is : " + this.context);
         let apinm = JSON.parse(JSON.stringify(this.apiname));
         //console.log("apiname:" + apinm);
         console.log('apiname', JSON.stringify(this.apiname));
-        // var dep_options = [];
+        //var dep_options = [];
         //var final_dep_op = [];
-        console.log('depvalue', JSON.stringify(this.depvalue));
-        // this.depvalue.forEach(op => {
-        // dep_options = Object.values(op);
+        // this.dependentoption.forEach(op => {
+        //     dep_options = Object.values(op);
         // });
-        // console.log('dependent options'+JSON.stringify(dep_options));
-        
-        //this.final_dep_op = 
-        //dep_options[0][this.value];
-       // this.final_dep_op.push(tempObj);
-        // console.log('final_dep_op',JSON.stringify(this.final_dep_op));
-          
+        // console.log('dependent options' + JSON.stringify(dep_options));
 
-
-        //console.log('dependent options outside for each'+this.dep_options);
-        // this.dep_options.forEach(dopt =>{
-        // final_dep_op1 = dopt[this.value];
-        // console.log('final_dep_op1'+JSON.stringify(final_dep_op1));
-        //   });
+        if (this.value === 'None') {
+            this.disp_Opt = [];
+            this.tempObj.isSelected = true;
+            this.disp_Opt.push(this.tempObj);
+        }else{
+            this.disp_Opt = this.dependentoption[this.childapi][this.value];        }
+       
+        console.log('this.disp_Opt', JSON.stringify(this.disp_Opt));
 
         //fire event to send context and selected value to the data table
-        const pickListChangeEvent = new CustomEvent('picklistchanged',{
+        const pickListChangeEvent = new CustomEvent('picklistchanged', {
             composed: true,
             bubbles: true,
             cancellable: true,

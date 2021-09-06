@@ -1,14 +1,16 @@
 public with sharing class picklistDatatableEditContoller
 {
-    
+
     /**
-* @description       : Method is used for updating the record after datatable is updated
-* @param             : String strObjectApiName,String strfieldSetName,Integer limitSize,Integer offset
-* @return            : string,Integer
-* @author            : Vrushabh Uprikar
-**/
+     * @description       : Method is used for updating the record after datatable is updated
+     * @param             : String strObjectApiName,String strfieldSetName,Integer limitSize,Integer offset
+     * @return            : string,Integer
+     * @author            : Vrushabh Uprikar
+     * @last modified on  : 02-09-2021
+     * @last modified by  : Vrushabh Uprikar
+    **/
     @AuraEnabled
-    public static string getUpdatedDataOnly(String strObjectApiName, String strfieldSetName, Integer limitSize, Integer offset)
+    public static string getUpdatedDataOnly(String strObjectApiName, String strfieldSetName, Integer offset)
     {
         Map<String, String> returnMap = new Map<String,String>();
         if(!String.isEmpty(strObjectApiName) && !String.isEmpty(strfieldSetName))
@@ -24,8 +26,8 @@ public with sharing class picklistDatatableEditContoller
                 query += f.getFieldPath() + ', '; // getFieldPath() of FieldSetMember gives the fieldAPI which has been used to build SOQL query.
             }
             query += 'Id FROM ' + strObjectApiName ;
-            query += ' ORDER BY LastModifiedDate DESC LIMIT '+limitSize + ' OFFSET '+ offset ;
-            //execute query
+            query += ' ORDER BY LastModifiedDate DESC LIMIT ' + ' OFFSET '+ offset ;
+	        //execute query
             List<SObject> lstRecords = Database.query(query);
             //prepare a map which will hold fieldList and recordList and return it
             returnMap.put('RECORD_LIST', JSON.serialize(lstRecords));
@@ -33,15 +35,15 @@ public with sharing class picklistDatatableEditContoller
         }
         return null; // will return null if ObjectApi and FieldSet not found
     }
-    
+
     /**
-* @description       : returns initial Records, coloums And Picklist values in the map format
-* @param             : String strObjectApiName,String strfieldSetName,String dynamicLimit
-* @return            : string
-* @author            : Vivek Raj
-* @last modified on  : 25-08-2021
-* @last modified by  : Vrushabh Uprikar
-**/
+     * @description       : returns initial Records, coloums And Picklist values in the map format
+     * @param             : String strObjectApiName,String strfieldSetName,String dynamicLimit
+     * @return            : string
+     * @author            : Vivek Raj
+     * @last modified on  : 02-09-2021
+     * @last modified by  : Vrushabh Uprikar
+    **/
     @AuraEnabled(cacheable=false)
     public static String getFieldSetAndRecords(String strObjectApiName, String strfieldSetName, String dynamicLimit)
     {
@@ -55,21 +57,21 @@ public with sharing class picklistDatatableEditContoller
             //prepare SOQL query based on fieldAPIs
             String query = 'SELECT ';
             List<Map<String,List<PickListWrap>>> piclist = new List<Map<String,List<PickListWrap>>>(); // Picklist values with fieldApi Name Map
-            List<Map<Schema.sObjectField,Map<String, Map<String, List<PickListWrap>>>>> DPickList = new List<Map<Schema.sObjectField,Map<String, Map<String, List<PickListWrap>>>>>();
+            List<Map<Schema.sObjectField, Map<String, List<PickListWrap>>>> DPickList = new List<Map<Schema.sObjectField, Map<String, List<PickListWrap>>>>();
             for(Schema.FieldSetMember f : lstFSMember) //Use of Schema.FieldSetMember to get the fields from Field Set.
             {
                 query += f.getFieldPath() + ', '; // getFieldPath() of FieldSetMember gives the fieldAPI which has been used to build SOQL query.
-                if(f.getType() == Schema.DisplayType.Picklist)
+ 				if(f.getType() == Schema.DisplayType.Picklist)
                 {
                     String sObjfield = (String)(strObjectApiName + '.'+f.getFieldPath()); // String to Schema.SobjectField
                     List<String> splitString = sObjfield.split('\\.');
                     Schema.SobjectField theField = Schema.getGlobalDescribe().get(splitString[0]).getDescribe().fields.getMap().get(splitString[1]);
                     
-                    Map<Schema.sObjectField,Map<String, Map<String, List<PickListWrap>>>> depPickListValues = new Map<Schema.sObjectField,Map<String, Map<String, List<PickListWrap>>>>(); // Collect Dependent PickLIst Values
+                    Map<Schema.sObjectField, Map<String, List<PickListWrap>>> depPickListValues = new Map<Schema.sObjectField, Map<String, List<PickListWrap>>>(); // Collect Dependent PickLIst Values
                     depPickListValues = getDependentPicklistValues(theField);
                     System.debug('depPickListValues '+ depPickListValues);
                     if(depPickListValues == null || depPickListValues.isEmpty())
-                    {	
+                    {
                         String fpath = (String)f.getFieldPath();
                         piclist.add(getPicklistOptions(strObjectApiName,fpath));
                         System.debug('piclist' + piclist);
@@ -78,42 +80,38 @@ public with sharing class picklistDatatableEditContoller
                     }
                 }
             }
+            System.debug('DPickList: ' + DPickList);
             query += 'Id FROM ' + strObjectApiName ;
-            if(dynamicLimit == '0')
-            {
-                query += ' ORDER BY LastModifiedDate DESC LIMIT 10';
-            }else if(dynamicLimit == null || dynamicLimit == '')
-            {
-                query += ' ORDER BY LastModifiedDate DESC LIMIT 10';
-            }else {
-                query += ' ORDER BY LastModifiedDate DESC LIMIT'+ dynamicLimit;
-            }
             
-            //execute query
+            query += ' ORDER BY LastModifiedDate DESC LIMIT 10';
+            
+            
+            System.debug('QUERY : '+ query);
+	        //execute query
             List<SObject> lstRecords = Database.query(query);
             //prepare a map which will hold fieldList and recordList and return it
             returnMap.put('FIELD_LIST', JSON.serialize(lstFSMember));
             returnMap.put('RECORD_LIST', JSON.serialize(lstRecords));
             returnMap.put('PICKVAL_LIST', JSON.serialize(piclist));
             returnMap.put('D_PICKVAL_LIST', JSON.serialize(DPickList));
-            
+
             return JSON.serialize(returnMap);
         }
         return null; // will return null if ObjectApi and FieldSet not found
     }
-    
+
     /**
-* @description       : Its updates the draft values in the inline editing datable
-* @param             : String jSONSObject,String sObjectApiName
-* @return            : string
-* @author            : Vivek Raj
-* @last modified on  : 25-08-2021
-* @last modified by  : Vrushabh Uprikar
-**/
+     * @description       : Its updates the draft values in the inline editing datable
+     * @param             : String jSONSObject,String sObjectApiName
+     * @return            : string
+     * @author            : Vivek Raj
+     * @last modified on  : 02-09-2021
+     * @last modified by  : Vrushabh Uprikar
+    **/
     @AuraEnabled
     public static String upsertSOBJRecord(String jSONSObject, String sObjectApiName)
     {
-        Map<String, String> returnMap = new Map<String,String>();
+        //Map<String, String> returnMap = new Map<String,String>();
         Schema.SObjectType targetType = Schema.getGlobalDescribe().get(sObjectApiName);
         List<Object> fieldList = (List<Object>)JSON.deserializeUntyped(jSONSObject);
         List<SObject> newSobjectList = new List<SObject>();
@@ -174,18 +172,18 @@ public with sharing class picklistDatatableEditContoller
             return ''+e.getMessage();
         }
     }
-    
+
     /**
-* @description       : Getting the Picklist values from the fieldset
-* @param             : String objectApiName,String fieldApiName
-* @return            : string
-* @author            : Vrushabh Uprikar
-* @last modified on  : 25-08-2021
-* @last modified by  : Vrushabh Uprikar
-**/
+     * @description       : Getting the Picklist values from the fieldset
+     * @param             : String objectApiName,String fieldApiName
+     * @return            : string
+     * @author            : Vrushabh Uprikar
+     * @last modified on  : 02-09-2021
+     * @last modified by  : Vrushabh Uprikar
+    **/
     public static Map<String,List<PickListWrap>> getPicklistOptions(String objectApiName, String fieldApiName)
     { // Eg. Account, Type(FieldApiName)
-        
+
         //List<String> picklistOptions = new List<String>();
         List<PickListWrap> PickListWrapList = new List<PickListWrap>();
         Map<String,List<PickListWrap>> PickListWrapMap = new Map<String,List<PickListWrap>>();
@@ -202,44 +200,44 @@ public with sharing class picklistDatatableEditContoller
                 PickListWrapList.add(new PickListWrap(pickListVal.getLabel(),pickListVal.getValue()));
                 //picklistOptions.add(option);
             }
-            
+
             PickListWrapMap.put(fieldApiName, PickListWrapList);
-            
+
         } catch (Exception ex)
         {
             throw new AuraHandledException(ex.getMessage());
         }
         return PickListWrapMap;
     }
-    
+
     public class PickListWrap{
         @AuraEnabled public String label;
         @AuraEnabled public String value;
         
         public PickListWrap(String label, String value){
-            this.value = value;
+        	this.value = value;
             this.label = label;
         }
     }
     
-    
+
     /**
-* @description       : updates the data when replace funtionality is called.
-* @param             : String strObjectApiName,String Record_Id,Replace_text,Replace_field,field_type
-* @return            : string
-* @author            : Vrushabh Uprikar
-* @last modified on  : 25-08-2021
-* @last modified by  : Vrushabh Uprikar
-**/ 
+     * @description       : updates the data when replace funtionality is called.
+     * @param             : String strObjectApiName,String Record_Id,Replace_text,Replace_field,field_type
+     * @return            : string
+     * @author            : Vrushabh Uprikar
+     * @last modified on  : 02-09-2021
+     * @last modified by  : Vrushabh Uprikar
+    **/ 
     @AuraEnabled
     public static String updateRecords(String strObjectApiName, String Record_Id, 
-                                       String Replace_text, String Replace_field, String field_type)
+                                    String Replace_text, String Replace_field, String field_type)
     {
         if(!String.isEmpty(Record_Id) && !String.isEmpty(Replace_text))
         {
             //get fields from FieldSet
             SObject sObj = (SObject)(Type.forName('Schema.'+ strObjectApiName).newInstance()); //  Create new sObj
-            sObj.Id = Record_Id;
+			sObj.Id = Record_Id;
             if(field_type == 'double')
             {
                 Integer myInt = Integer.valueOf(Replace_text);
@@ -255,18 +253,18 @@ public with sharing class picklistDatatableEditContoller
                 day = Replace_text.substring(8,10);
                 Date myDate = Date.newInstance(integer.valueOf(year),integer.valueOf(month),integer.valueOf(day));
                 sObj.put(Replace_field,myDate);
-                
+
             }else if(field_type == 'datetime')
             {
                 Datetime dt1 = Datetime.valueOf(Replace_text);
                 System.debug(' Parsed DateTime is ' + dt1 );
                 sObj.put(Replace_field,dt1);
-                
+
             }else 
             {
                 sObj.put(Replace_field,Replace_text);
             }
-            
+			                               
             try 
             {
                 update sObj;
@@ -280,16 +278,15 @@ public with sharing class picklistDatatableEditContoller
         }
         return 'Something Went Wrong';
     }
-    
-    
+
     /**
-* @description       : Funtionality is used for deleting the Records.
-* @param             : idlist
-* @return            : string
-* @author            : Vrushabh Uprikar
-* @last modified on  : 25-08-2021
-* @last modified by  : Vrushabh Uprikar
-**/
+     * @description       : Funtionality is used for deleting the Records.
+     * @param             : idlist
+     * @return            : string
+     * @author            : Vrushabh Uprikar
+     * @last modified on  : 02-09-2021
+     * @last modified by  : Vrushabh Uprikar
+    **/
     @AuraEnabled
     public static string deleteRecords(List<Id> idlist)
     {
@@ -303,15 +300,12 @@ public with sharing class picklistDatatableEditContoller
             return ''+e.getMessage();
         }
     }
-    
-    ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    
-    public static Map<Schema.sObjectField,Map<String, Map<String, List<PickListWrap>>>> getDependentPicklistValues(Schema.sObjectField dependToken) 
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    public static Map<Schema.sObjectField, Map<String, List<PickListWrap>>> getDependentPicklistValues(Schema.sObjectField dependToken) 
     {
         Schema.DescribeFieldResult depend = dependToken.getDescribe();
-        //dependent picklist filed
-        String dependenttoken = depend.getName();
-        System.debug('dependenttoken: ' + dependenttoken);
         //controlling picklist field
         Schema.sObjectField controlToken = depend.getController();
         System.debug('controlToken: ' + controlToken);
@@ -319,16 +313,14 @@ public with sharing class picklistDatatableEditContoller
         {
             return null;
         }
-        
+    
         Schema.DescribeFieldResult control = controlToken.getDescribe();
-        //System.debug('control:'+ control);
         List<Schema.PicklistEntry> controlEntries;
         if(control.getType() != Schema.DisplayType.Boolean)
         {
             controlEntries = control.getPicklistValues();
-            
         }
-        
+    
         String base64map = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
         Map<String,List<String>> dependentPicklistValues = new Map<String,List<String>>();
         for (Schema.PicklistEntry entry : depend.getPicklistValues()) 
@@ -336,15 +328,15 @@ public with sharing class picklistDatatableEditContoller
             if (entry.isActive() && String.isNotEmpty(String.valueOf(((Map<String,Object>) JSON.deserializeUntyped(JSON.serialize(entry))).get('validFor'))))
             {
                 List<String> base64chars =
-                    String.valueOf(((Map<String,Object>) JSON.deserializeUntyped(JSON.serialize(entry))).get('validFor')).split('');
+                        String.valueOf(((Map<String,Object>) JSON.deserializeUntyped(JSON.serialize(entry))).get('validFor')).split('');
                 for (Integer index = 0; index < (controlEntries != null ? controlEntries.size() : 2); index++)
                 {
                     // each of picklist value of controlling picklist
                     Object controlValue =
-                        (controlEntries == null
-                         ?   (Object) (index == 1)
-                         :   (Object) (controlEntries[index].isActive() ? controlEntries[index].getLabel() : null)
-                        );
+                            (controlEntries == null
+                                    ?   (Object) (index == 1)
+                                    :   (Object) (controlEntries[index].isActive() ? controlEntries[index].getLabel() : null)
+                            );
                     Integer bitIndex = index / 6;
                     if (bitIndex > base64chars.size() - 1)
                     {
@@ -358,13 +350,14 @@ public with sharing class picklistDatatableEditContoller
                         dependentPicklistValues.put((String) controlValue, new List<String>());
                     }
                     dependentPicklistValues.get((String) controlValue).add(entry.getLabel());
-                    //System.debug('controlValue: ' + controlValue);
+                    // System.debug('controlValue: ' + controlValue);
                 }
             }
         }
         
         Map<String, List<PickListWrap>> aaaMap = new Map<String, List<PickListWrap>>();
-        for(String key :dependentPicklistValues.keySet()){
+        for(String key :dependentPicklistValues.keySet())
+        {
             List<PickListWrap> picklistL = new List<PickListWrap>();
             for(String key1 : dependentPicklistValues.get(key))
             {
@@ -372,30 +365,9 @@ public with sharing class picklistDatatableEditContoller
             }
             aaaMap.put(key, picklistL);
         }
-        Map<String, Map<String, List<PickListWrap>>> D_values = new Map<String, Map<String, List<PickListWrap>>>();
-        D_values.put(dependenttoken,aaaMap);
-        Map<Schema.sObjectField, String> depMaping = new Map<Schema.sObjectField,String>();
-        depMaping.put(controlToken,dependenttoken);
-        System.debug('depMaping'+ depMaping);
-        Map<Schema.sObjectField,Map<String, Map<String, List<PickListWrap>>>> dpMap = new Map<Schema.sObjectField,Map<String, Map<String, List<PickListWrap>>>>();
-        dpMap.put(controlToken, D_values);
-        return dpMap;
+        Map<Schema.sObjectField, Map<String, List<PickListWrap>>> D_values = new Map<Schema.sObjectField, Map<String, List<PickListWrap>>>();
+        D_values.put(controlToken,aaaMap);
+        System.debug('D_values: ' + D_values);
+        return D_values;
     }
-    
-    public static Map<Schema.sObjectField, String> getDependencyMap(Schema.sObjectField dependToken){
-        
-        Schema.DescribeFieldResult depend = dependToken.getDescribe();
-        
-        //dependent picklist filed
-        String dependenttoken = depend.getName();
-        
-        //controller picklist filed
-        Schema.sObjectField controlToken = depend.getController();
-        
-        Map<Schema.sObjectField, String> dependecyMap = new Map<Schema.sObjectField, String>();
-        dependecyMap.put(controlToken,dependenttoken);
-        return dependecyMap;
-        
-    }
-    
 }

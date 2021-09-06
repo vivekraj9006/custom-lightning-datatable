@@ -9,7 +9,7 @@ import deleteRecords from '@salesforce/apex/picklistDatatableEditContoller.delet
 export default class AccountDatatable extends LightningElement {
     @api isLoaded = false;
     @track allData = []; // Datatable
-    allDataOrgCopy = []; // DatatableOrignalCopy
+    allDataOrgCopy = []; // DatatableOrignalCpy
     @track columns = [];
     @track searchKey = '';
     @track replacetext = [];
@@ -30,59 +30,38 @@ export default class AccountDatatable extends LightningElement {
     isSearchFlag = false;
     takeActionConVal = 'AND'; // from child 
     @track filterState = false;
-
     @api showfilter;
     @api showSearchAndReplace;
     @api showAddRow;
     @api showDeleteBtn;
-
     isDateType = false;
     isDateTimeType = false;
     isTimeType = false;
     isPicklistType = false; // forPicklist if available;
     isStringType = true;
-
     // InfinScroll
-    PaginationType = 'Infinite_Scroll'; // Infinite scrolling / Standard Pagination
-    isStdPagination = false;
-    isInfinScroll = false;
+    // PaginationType = 'Infinite_Scroll'; // Infinite scrolling / Standard Pagination
+    // isStdPagination = false;
+    // isInfinScroll = false;
     @api NumberRows; // NumberRows or Number of Rows to be disply at a Time
     offset = '0';
     dynamicLimit = 0;
-    fdep = [];
-    keylist = [];
-    all_data_result=[];
-    skeylist = [];
-
-    // dependencymap = 
-    //     {
-    //       "State__c": "City__c",
-    //       "Brand": "Phone_Model__c"
-    //     };
-
-    // option_initials = [{
-    //     id: '0015g00000Lqr73AAB',
-    //     value: 'xyz',
-    //     isSelected: true
-    //   }];
-      
-
     rowIds = []; // Collect row Ids for deletion
-
+    depval_list = {
+        "State__c": "City__c",
+        "Brand__c": "Phone_Model__c"
+    };
     /**
      * @description       : For calling getFieldSetAndRecords method /returning table data,coloumn data, picklist value initially 
      * @author            : Vrushabh Uprikar
-     * @last modified on  : 26-08-2021
+     * @last modified on  : 02-09-2021
     **/
     connectedCallback() {
-
-        if (this.isStdPagination) {
-            this.dynamicLimit = 0;
-
-        } else if (this.isInfinScroll) {
-            this.dynamicLimit = parseInt(this.NumberRows);
-        }
-
+        // if (this.isStdPagination) {
+        //     this.dynamicLimit = 0;
+        // } else if (this.isInfinScroll) {
+        //     this.dynamicLimit = parseInt(this.NumberRows);
+        // }
         getFieldSetAndRecords({
             strObjectApiName: this.SFDCobjectApiName,
             strfieldSetName: this.fieldSetName,
@@ -90,7 +69,7 @@ export default class AccountDatatable extends LightningElement {
         })
             .then(async data => {
                 this.isLoading = true;
-                this.setPaginationType();
+                //this.setPaginationType();
                 let objStr = JSON.parse(data);
                 let listOfFields = JSON.parse(Object.values(objStr)[3]);
                 this.listOfFieldsCopy = listOfFields;
@@ -99,45 +78,16 @@ export default class AccountDatatable extends LightningElement {
                 console.log('listOfRecords:', JSON.stringify(listOfRecords)); // Data/ Records
                 var pickListValues = JSON.parse(Object.values(objStr)[1]);
                 console.log('pickListValues:', JSON.stringify(pickListValues)); // Picklist
-                var DpickListValues = JSON.parse(Object.values(objStr)[0]);
+                var DpickListValues_c = JSON.parse(Object.values(objStr)[0]);
+                var DpickListValues ={...DpickListValues_c[0],...DpickListValues_c[1]};
+                console.log('DpickListValues_c:', JSON.stringify(DpickListValues_c)); // DPicklist
+                // DpickListValues_c.forEach(pickListKeyValue =>{
+                //     DpickListValue = {...pickListKeyValue};
+                // });
                 console.log('DpickListValues:', JSON.stringify(DpickListValues)); // DPicklist
-
-                DpickListValues.forEach(dm =>{
-                    var res = [];
-                    var re1 = [];
-                    res = Object.keys(dm);
-                    res.forEach(re =>{
-                    re1 = Object.keys(dm[re]);
-                    this.fdep.push({'controller':re, 
-                                'dependent':re1[0]});
-                    console.log('fdep',JSON.stringify(this.fdep));
-                    });
-                    });
-
-                    this.fdep.forEach(searchkey =>{
-                        this.skeylist.push(searchkey.dependent);
-                    });
-
-                    console.log('skeylist',JSON.stringify(this.skeylist));
-
-                    
-
                 var xx = JSON.stringify(listOfRecords);
                 this.allData = JSON.parse(xx);
                 this.allDataOrgCopy = JSON.parse(xx);
-
-                this.allData.forEach(data=>{
-                    var skeyresult = [];
-                    var res = [];
-                    this.skeylist.forEach(skey=>{
-                    res = data[skey];
-                    skeyresult.push({'dependentKey':skey,'label':res, 'value':res});
-                    });
-                    //this.all_data_result.push(skeyresult);
-                    this.all_data_result = this.all_data_result.concat(skeyresult);
-                    //this.all_data_result = [...skeyresult];
-                    });
-
                 await listOfFields.map(element => {
                     this.isLoading = true;
                     if (element.type == 'picklist') {
@@ -162,20 +112,23 @@ export default class AccountDatatable extends LightningElement {
                                             fieldName: element.fieldPath
                                         },
                                         context: { fieldName: 'Id' },
-                                        depvalue: this.all_data_result,
+                                        dependentoption: DpickListValues,
                                         apiname: element.fieldPath,
                                         variant: 'label-hidden',
                                         name: element.label,
-                                        label: element.label
+                                        label: element.label,
+                                        dependentvalue:
+                                        {
+                                            fieldName: this.depval_list[element.fieldPath]
+                                        },
+                                        childapi: element.fieldPath
                                     },
                                     wrapText: true
                                 };
+                                console.log('colJosn: ', JSON.stringify(colJson));
                                 this.columns.push(colJson);
                             }
-
-
                         });
-
                     } else if (element.type == 'datetime') {
                         let datetimeTypeAttr = {
                             day: 'numeric',
@@ -248,23 +201,20 @@ export default class AccountDatatable extends LightningElement {
                         };
                         this.columns.push(elm);
                     }
-
                     // fileds for ComboBox
                     this.fieldOptionJSON = [...this.fieldOptionJSON, {
                         label: element.label,
                         value: element.fieldPath,
                         type: element.type
                     }];
-
                 });
                 this.FieldsValue = this.fieldOptionJSON[0].value;
                 this.fieldOption = this.fieldOptionJSON[0].value;
-
             })
             .then(_ => {
                 var parseCol = JSON.stringify(this.columns);
                 this.columns = JSON.parse(parseCol);
-                console.table('final columns',JSON.stringify(this.columns));
+                console.table(this.columns);
                 console.log('this.allData:', JSON.parse(JSON.stringify(this.allData)));
                 this.error = undefined;
             })
@@ -273,14 +223,11 @@ export default class AccountDatatable extends LightningElement {
                 console.log('this.error', this.error);
                 this.allData = undefined;
             });
-
-            
     }
-
     /**
      * @description       : For Updating Picklist values on Change event
      * @author            : Vrushabh Uprikar
-     * @last modified on  : 26-08-2021
+     * @last modified on  : 02-09-2021
     **/
     picklistChanged(event) {
         event.stopPropagation();
@@ -291,12 +238,10 @@ export default class AccountDatatable extends LightningElement {
         };
         this.updateDraftValues(picklistObj);
     }
-
-
     /**
      * @description       : Handlsave event to save Edit draftvalues and Record Insert save button
      * @author            : Vrushabh Uprikar
-     * @last modified on  : 26-08-2021
+     * @last modified on  : 02-09-2021
     **/
     async handleSave(event) {
         let copyDraftValues = this.draftValues;
@@ -332,22 +277,20 @@ export default class AccountDatatable extends LightningElement {
                 );
             });
     }
-
     /**
      * @description       : This method is for updating the draft values on Cell change 
      * @author            : Vrushabh Uprikar
-     * @last modified on  : 26-08-2021
+     * @last modified on  : 02-09-2021
     **/
     handleCellChange(event) {
         event.preventDefault();
         this.updateDraftValues(event.detail.draftValues[0]);
         console.log('DraftValues handleCellChange ' + JSON.stringify(event.detail.draftValues));
     }
-
     /**
      * @description       : This method is for updating the draft values
      * @author            : Vrushabh Uprikar
-     * @last modified on  : 26-08-2021
+     * @last modified on  : 02-09-2021
     **/
     async updateDraftValues(updateItem) {
         let draftValueChanged = false;
@@ -369,11 +312,10 @@ export default class AccountDatatable extends LightningElement {
         console.log('UpdateddraftValues :', JSON.stringify(this.draftValues));
         console.log('this.allData After Draft:', JSON.parse(JSON.stringify(this.allData)));
     }
-
     /**
      * @description       : This method will call on Add row Button Click and will add blank row on top of DataTable
      * @author            : Vrushabh Uprikar
-     * @last modified on  : 26-08-2021
+     * @last modified on  : 02-09-2021
     **/
     addRow() {
         this.isNewRec = true;
@@ -398,13 +340,12 @@ export default class AccountDatatable extends LightningElement {
         console.log('this.allData After :', JSON.parse(JSON.stringify(this.allData)));
         this.AddButonCounter = this.AddButonCounter + 1;
     }
-
     /**
      * @description       : This function returns updated table data.
      * @param             : strObjectApiName,strfieldSetName,limitSize
      * @return            : string
      * @author            : Vrushabh Uprikar
-     * @last modified on  : 26-08-2021
+     * @last modified on  : 02-09-2021
     **/
     getUpdatedData() {
         getUpdatedDataOnly({
@@ -426,12 +367,10 @@ export default class AccountDatatable extends LightningElement {
                 console.log('this.error', this.error);
             });
     }
-
-
     /**
      * @description       : It change Input as per Field type.
      * @author            : Vrushabh Uprikar
-     * @last modified on  : 26-08-2021
+     * @last modified on  : 02-09-2021
     **/
     handleChangeFields(event) {
         // on chnage of combobox value
@@ -446,21 +385,18 @@ export default class AccountDatatable extends LightningElement {
             this.isTimeType = false;
             this.isPicklistType = false; // forPicklist if available;
             this.isStringType = false;
-
         } else if (this.fieldType == 'time') {
             this.isDateType = false;
             this.isDateTimeType = false;
             this.isTimeType = true;
             this.isPicklistType = false; // forPicklist if available;
             this.isStringType = false;
-
         } else if (this.fieldType == 'date') {
             this.isDateType = true;
             this.isDateTimeType = false;
             this.isTimeType = false;
             this.isPicklistType = false; // forPicklist if available;
             this.isStringType = false;
-
         } else {   //if(this.fieldType == 'string')
             this.isDateType = false;
             this.isDateTimeType = false;
@@ -468,19 +404,16 @@ export default class AccountDatatable extends LightningElement {
             this.isPicklistType = false; // forPicklist if available;
             this.isStringType = true;
         }
-
         console.log(' this.fieldType: ' + dataType.type);
     }
-
     get FieldsOptions() {
         // combobox option set
         return this.fieldOptionJSON;
     }
-
     /**
      * @description       : This method collects search key
      * @author            : Vrushabh Uprikar
-     * @last modified on  : 26-08-2021
+     * @last modified on  : 02-09-2021
     **/
     handleKeyChange(event) {
         try {
@@ -495,29 +428,23 @@ export default class AccountDatatable extends LightningElement {
                 this.allData = this.allDataOrgCopy;
                 this.isSearchFlag = false;
             }
-
         } catch (error) {
             console.log('error in handle Key Change :', error);
-
         }
-
-
     }
-
     /**
      * @description       : It takes key change value for replace text
      * @author            : Vrushabh Uprikar
-     * @last modified on  : 26-08-2021
+     * @last modified on  : 02-09-2021
     **/
     handelonchange(event) {
         this.replacetext = event.target.value;
         //console.log('replacetext', JSON.stringify(replacetext));
     }
-
     /**
      * @description       : Collects replace text send it to the database
      * @author            : Vrushabh Uprikar
-     * @last modified on  : 26-08-2021
+     * @last modified on  : 02-09-2021
     **/
     // onClick Replace
     async handleReplace() {
@@ -583,13 +510,12 @@ export default class AccountDatatable extends LightningElement {
             this.dispatchEvent(evt);
         }
     }
-
     /**
      * @description       : Perform search on the datatable
      * @param             : searchString,allRecords,searchResults,fieldDataType
      * @return            : string
      * @author            : Vrushabh Uprikar
-     * @last modified on  : 26-08-2021
+     * @last modified on  : 02-09-2021
     **/
     searchDataTable() {
         let searchString = this.searchKey;
@@ -613,11 +539,10 @@ export default class AccountDatatable extends LightningElement {
         }
         this.allData = searchResults;
     }
-
     /**
      * @description       : It filters datatable based on child filter component criteria
      * @author            : Vrushabh Uprikar
-     * @last modified on  : 26-08-2021
+     * @last modified on  : 02-09-2021
     **/
     filterCriteriaChange(event) {
         var filterCriteriaList = (JSON.parse(JSON.stringify(event.detail)));
@@ -637,49 +562,41 @@ export default class AccountDatatable extends LightningElement {
                         filterResults = allRecords.filter(key => key[filterCriteria.resource] < filterCriteria.value);
                         this.allData = filterResults;
                         break;
-
                     case 'greaterThan':
                         allRecords = this.allData;
                         filterResults = allRecords.filter(key => key[filterCriteria.resource] > filterCriteria.value);
                         this.allData = filterResults;
                         break;
-
                     case 'lessOrEqual':
                         allRecords = this.allData;
                         filterResults = allRecords.filter(key => key[filterCriteria.resource] <= filterCriteria.value);
                         this.allData = filterResults;
                         break;
-
                     case 'greaterOrEqual':
                         allRecords = this.allData;
                         filterResults = allRecords.filter(key => key[filterCriteria.resource] >= filterCriteria.value);
                         this.allData = filterResults;
                         break;
-
                     case 'equals':
                         allRecords = this.allData;
                         filterResults = allRecords.filter(key => key[filterCriteria.resource] == filterCriteria.value);
                         this.allData = filterResults;
                         break;
-
                     case 'notEquals':
                         allRecords = this.allData;
                         filterResults = allRecords.filter(key => key[filterCriteria.resource] != filterCriteria.value);
                         this.allData = filterResults;
                         break;
-
                     case 'endsWith':
                         allRecords = this.allData;
                         filterResults = allRecords.filter(key => String(key[filterCriteria.resource]).toLocaleLowerCase().endsWith(String(filterCriteria.value).toLocaleLowerCase()));
                         this.allData = filterResults;
                         break;
-
                     case 'startsWith':
                         allRecords = this.allData;
                         filterResults = allRecords.filter(key => String(key[filterCriteria.resource]).toLocaleLowerCase().startsWith(String(filterCriteria.value).toLocaleLowerCase()));
                         this.allData = filterResults;
                         break;
-
                     case 'empty':
                         allRecords = this.allData;
                         filterResults = allRecords.filter(key => {
@@ -692,7 +609,6 @@ export default class AccountDatatable extends LightningElement {
                         });
                         this.allData = filterResults;
                         break;
-
                     case 'contains':
                         allRecords = this.allData;
                         filterResults = allRecords.filter(key => {
@@ -702,7 +618,6 @@ export default class AccountDatatable extends LightningElement {
                         });
                         this.allData = filterResults;
                         break;
-
                     default:
                         break;
                 }
@@ -718,57 +633,48 @@ export default class AccountDatatable extends LightningElement {
                             collectorData.push(key);
                         });
                         break;
-
                     case 'greaterThan':
                         filterResults = allRecords.filter(key => key[filterCriteria.resource] > filterCriteria.value);
                         filterResults.forEach(key => {
                             collectorData.push(key);
                         });
                         break;
-
                     case 'lessOrEqual':
                         filterResults = allRecords.filter(key => key[filterCriteria.resource] <= filterCriteria.value);
                         filterResults.forEach(key => {
                             collectorData.push(key);
                         });
                         break;
-
                     case 'greaterOrEqual':
                         filterResults = allRecords.filter(key => key[filterCriteria.resource] >= filterCriteria.value);
                         filterResults.forEach(key => {
                             collectorData.push(key);
                         });
                         break;
-
                     case 'equals':
                         filterResults = allRecords.filter(key => key[filterCriteria.resource] == filterCriteria.value);
                         filterResults.forEach(key => {
                             collectorData.push(key);
                         });
                         break;
-
                     case 'notEquals':
                         filterResults = allRecords.filter(key => key[filterCriteria.resource] != filterCriteria.value);
                         filterResults.forEach(key => {
                             collectorData.push(key);
                         });
-
                         break;
-
                     case 'endsWith':
                         filterResults = allRecords.filter(key => String(key[filterCriteria.resource]).toLocaleLowerCase().endsWith(String(filterCriteria.value).toLocaleLowerCase()));
                         filterResults.forEach(key => {
                             collectorData.push(key);
                         });
                         break;
-
                     case 'startsWith':
                         filterResults = allRecords.filter(key => String(key[filterCriteria.resource]).toLocaleLowerCase().startsWith(String(filterCriteria.value).toLocaleLowerCase()));
                         filterResults.forEach(key => {
                             collectorData.push(key);
                         });
                         break;
-
                     case 'empty':
                         filterResults = allRecords.filter(key => {
                             if (key[filterCriteria.resource] == 'undefined' ||
@@ -782,7 +688,6 @@ export default class AccountDatatable extends LightningElement {
                             collectorData.push(key);
                         });
                         break;
-
                     case 'contains':
                         filterResults = allRecords.filter(key => {
                             if (String(key[filterCriteria.resource]).toLocaleLowerCase().indexOf(String(filterCriteria.value).toLocaleLowerCase()) != -1) {
@@ -794,7 +699,6 @@ export default class AccountDatatable extends LightningElement {
                         });
                         console.log('collectorData:', JSON.stringify(collectorData));
                         break;
-
                     default:
                         break;
                 }
@@ -805,33 +709,29 @@ export default class AccountDatatable extends LightningElement {
             });
         }
     }
-
     /**
      * @description       : It takes values and/or on filter criteria
      * @author            : Vrushabh Uprikar
-     * @last modified on  : 26-08-2021
+     * @last modified on  : 02-09-2021
     **/
     takeactionChnage(event) {
         this.takeActionConVal = JSON.parse(JSON.stringify(event.detail));
         console.log('takeActionConVal:', this.takeActionConVal);
     }
-
     /**
      * @description       : It will undo the current changes
      * @author            : Vrushabh Uprikar
-     * @last modified on  : 26-08-2021
+     * @last modified on  : 02-09-2021
     **/
     handleCancel(e) {
         this.draftValues = [];
         this.allData = this.allDataOrgCopy;
     }
-
     /**
-     * @description       : Infinite Loading
-     * @author            : Vrushabh Uprikar
-     * @last modified on  : 26-08-2021
-    **/
-
+  * @description       : Infinite Loading
+  * @author            : Vrushabh Uprikar
+  * @last modified on  : 02-09-2021
+ **/
     loadMoreData(event) {
         //console.log('Loadmore fired');
         if (this.isInfinScroll) {
@@ -844,19 +744,17 @@ export default class AccountDatatable extends LightningElement {
                 });
         }
     }
-
     /**
      * @description       : For loading Updated Data
      * @param             : strObjectApiName,strfieldSetName,limitSize
      * @return            : string
      * @author            : Vrushabh Uprikar
-     * @last modified on  : 26-08-2021
+     * @last modified on  : 02-09-2021
     **/
     loadData() {
         return getUpdatedDataOnly({
             strObjectApiName: this.SFDCobjectApiName,
             strfieldSetName: this.fieldSetName,
-            limitSize: parseInt(this.NumberRows),
             offset: parseInt(this.offset)
         })
             .then(async data => {
@@ -878,9 +776,9 @@ export default class AccountDatatable extends LightningElement {
     /**
      * @description       : For Infinite Scrolling in Pagination.
      * @author            : Vrushabh Uprikar
-     * @last modified on  : 26-08-2021
+     * @last modified on  : 02-09-2021
     **/
-    setPaginationType() {
+    /*setPaginationType() {
         if (this.PaginationType == 'Infinite_Scroll') {
             this.isStdPagination = false;
             this.isInfinScroll = true;
@@ -888,14 +786,14 @@ export default class AccountDatatable extends LightningElement {
             this.isStdPagination = true;
             this.isInfinScroll = false;
         }
-
-    }
+ 
+    }*/
 
     /**
      * @description       : This handler is for Row Selection
      * @author            : Vrushabh Uprikar
      * @return 
-     * @last modified on  : 26-08-2021
+     * @last modified on  : 02-09-2021
     **/
     handleRowSelection(event) {
         let rowIds = [];
@@ -908,7 +806,7 @@ export default class AccountDatatable extends LightningElement {
     /**
      * @description       : It will deleting the record ids.
      * @author            : Vrushabh Uprikar
-     * @last modified on  : 26-08-2021
+     * @last modified on  : 02-09-2021
     **/
     deleteRecordBtn(event) {
         deleteRecords({ idlist: this.rowIds })
@@ -935,5 +833,4 @@ export default class AccountDatatable extends LightningElement {
                 );
             });
     }
-
 }
