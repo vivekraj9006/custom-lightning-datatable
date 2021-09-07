@@ -1,44 +1,42 @@
 <template>
-    <lightning-layout>
-        <lightning-layout-item>
-            <div class="slds-form-element">
-                <label class="slds-form-element__label"
-                    for="controller">Controller Picklist</label>
-                <div class="slds-select_container">
-                    <select class="slds-select"
-                        id="controller"
-                        onchange={handleChange}>
-                        <template for:each={options}
-                            for:item='option'>
-                            <option key={option.id}
-                                value={option.value}
-                                selected={option.isSelected}>
-                                {option.value}
-                            </option>
-                        </template>
-                    </select>
-                </div>
+    <div class="slds-form-element">
+        <template if:true={isdependentflag}>
+            <label class="slds-form-element__label" for="controller">{label}</label>
+        </template>
+        <div class="slds-select_container">
+            <select class="slds-select"
+                id="controller"
+                onchange={handleChange}>
+                <template for:each={options}
+                    for:item='option'>
+                    <option key={option.id}
+                        value={option.value}
+                        selected={option.isSelected}>
+                        {option.value}
+                    </option>
+                </template>
+            </select>
+        </div>
+    </div>
+    
+<template if:true={isdependentflag}>
+        <div class="slds-form-element">
+            <label class="slds-form-element__label"
+                for="dependee">{C_LABEL}</label>
+            <div class="slds-select_container">
+                <select class="slds-select"
+                    id="dependee"
+                    onchange={handleChangeDependent}>
+                    <template for:each={disp_Opt}
+                        for:item='fop'>
+                        <option key={fop.value}
+                            value={fop.value}
+                            selected={fop.isSelected}>
+                            {fop.value}
+                        </option>
+                    </template>
+                </select>
             </div>
-        </lightning-layout-item>
-
-        <lightning-layout-item>
-            <div class="slds-form-element">
-                <label class="slds-form-element__label"
-                    for="dependee">Dependent Picklist</label>
-                <div class="slds-select_container">
-                    <select class="slds-select"
-                        id="dependee">
-                        <template for:each={disp_Opt}
-                            for:item='fop'>
-                            <option key={fop.value}
-                                value={fop.value}
-                                selected={fop.isSelected}>
-                                {fop.value}
-                            </option>
-                        </template>
-                    </select>
-                </div>
-            </div>
-        </lightning-layout-item>
-    </lightning-layout>
+        </div>
+</template>
 </template>

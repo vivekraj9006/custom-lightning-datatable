@@ -51,7 +51,7 @@ export default class AccountDatatable extends LightningElement {
     /**
      * @description       : For calling getFieldSetAndRecords method /returning table data,coloumn data, picklist value initially 
      * @author            : Vrushabh Uprikar
-     * @last modified on  : 03-09-2021
+     * @last modified on  : 06-09-2021
     **/
     connectedCallback() {
         getFieldSetAndRecords({
@@ -84,11 +84,18 @@ export default class AccountDatatable extends LightningElement {
                 }
                 console.log('DpickListValues:', JSON.stringify(DpickListValues)); // Spread Values
                 var xx = JSON.stringify(listOfRecords);
+                var isdependentflag = false;
                 this.allData = JSON.parse(xx);
                 this.allDataOrgCopy = JSON.parse(xx);
                 await listOfFields.map(element => {
                     this.isLoading = true;
                     if (element.type == 'picklist') {
+                        var childlabel = this.depval_list[element.fieldPath] + '';
+                        if (DpickListValues.hasOwnProperty(element.fieldPath)) {
+                            isdependentflag = true;
+                        } else {
+                            isdependentflag = false;
+                        }
                         let opt = []; // options of picklist
                         pickListValues.forEach(pic => {
                             if (element.fieldPath == Object.keys(pic)) {
@@ -119,7 +126,9 @@ export default class AccountDatatable extends LightningElement {
                                         {
                                             fieldName: this.depval_list[element.fieldPath]
                                         },
-                                        childapi: element.fieldPath
+                                        parentapi: element.fieldPath,
+                                        isdependentflag: isdependentflag,
+                                        childlabel: childlabel
                                     },
                                     wrapText: true
                                 };
@@ -225,12 +234,15 @@ export default class AccountDatatable extends LightningElement {
     /**
      * @description       : For Updating Picklist values on Change event
      * @author            : Vrushabh Uprikar
-     * @last modified on  : 03-09-2021
+     * @last modified on  : 06-09-2021
+     * 
+     * Calling this method from picklist.js CHILD Component
     **/
     picklistChanged(event) {
         event.stopPropagation();
         let dataRecieved = event.detail.data;
-        let picklistObj = {
+        let picklistObj =
+        {
             Id: dataRecieved.context,
             [dataRecieved.apiname]: dataRecieved.value
         };
@@ -239,7 +251,7 @@ export default class AccountDatatable extends LightningElement {
     /**
      * @description       : Handlsave event to save Edit draftvalues and Record Insert save button
      * @author            : Vrushabh Uprikar
-     * @last modified on  : 03-09-2021
+     * @last modified on  : 06-09-2021
     **/
     async handleSave(event) {
         let copyDraftValues = this.draftValues;
@@ -278,7 +290,7 @@ export default class AccountDatatable extends LightningElement {
     /**
      * @description       : This method is for updating the draft values on Cell change 
      * @author            : Vrushabh Uprikar
-     * @last modified on  : 03-09-2021
+     * @last modified on  : 06-09-2021
     **/
     handleCellChange(event) {
         event.preventDefault();
@@ -288,7 +300,7 @@ export default class AccountDatatable extends LightningElement {
     /**
      * @description       : This method is for updating the draft values
      * @author            : Vrushabh Uprikar
-     * @last modified on  : 03-09-2021
+     * @last modified on  : 06-09-2021
     **/
     async updateDraftValues(updateItem) {
         let draftValueChanged = false;
@@ -313,7 +325,7 @@ export default class AccountDatatable extends LightningElement {
     /**
      * @description       : This method will call on Add row Button Click and will add blank row on top of DataTable
      * @author            : Vrushabh Uprikar
-     * @last modified on  : 03-09-2021
+     * @last modified on  : 06-09-2021
     **/
     addRow() {
         this.isNewRec = true;
@@ -343,13 +355,12 @@ export default class AccountDatatable extends LightningElement {
      * @param             : strObjectApiName,strfieldSetName,limitSize
      * @return            : string
      * @author            : Vrushabh Uprikar
-     * @last modified on  : 03-09-2021
+     * @last modified on  : 06-09-2021
     **/
     getUpdatedData() {
         getUpdatedDataOnly({
             strObjectApiName: this.SFDCobjectApiName,
             strfieldSetName: this.fieldSetName,
-            limitSize: this.NumberRows,
             offset: 0
         })
             .then(async data => {
@@ -368,7 +379,7 @@ export default class AccountDatatable extends LightningElement {
     /**
      * @description       : It change Input as per Field type.
      * @author            : Vrushabh Uprikar
-     * @last modified on  : 03-09-2021
+     * @last modified on  : 06-09-2021
     **/
     handleChangeFields(event) {
         // on chnage of combobox value
@@ -411,7 +422,7 @@ export default class AccountDatatable extends LightningElement {
     /**
      * @description       : This method collects search key
      * @author            : Vrushabh Uprikar
-     * @last modified on  : 03-09-2021
+     * @last modified on  : 06-09-2021
     **/
     handleKeyChange(event) {
         try {
@@ -433,7 +444,7 @@ export default class AccountDatatable extends LightningElement {
     /**
      * @description       : It takes key change value for replace text
      * @author            : Vrushabh Uprikar
-     * @last modified on  : 03-09-2021
+     * @last modified on  : 06-09-2021
     **/
     handelonchange(event) {
         this.replacetext = event.target.value;
@@ -442,7 +453,7 @@ export default class AccountDatatable extends LightningElement {
     /**
      * @description       : Collects replace text send it to the database
      * @author            : Vrushabh Uprikar
-     * @last modified on  : 03-09-2021
+     * @last modified on  : 06-09-2021
     **/
     // onClick Replace
     async handleReplace() {
@@ -513,7 +524,7 @@ export default class AccountDatatable extends LightningElement {
      * @param             : searchString,allRecords,searchResults,fieldDataType
      * @return            : string
      * @author            : Vrushabh Uprikar
-     * @last modified on  : 03-09-2021
+     * @last modified on  : 06-09-2021
     **/
     searchDataTable() {
         let searchString = this.searchKey;
@@ -540,7 +551,7 @@ export default class AccountDatatable extends LightningElement {
     /**
      * @description       : It filters datatable based on child filter component criteria
      * @author            : Vrushabh Uprikar
-     * @last modified on  : 03-09-2021
+     * @last modified on  : 06-09-2021
     **/
     filterCriteriaChange(event) {
         var filterCriteriaList = (JSON.parse(JSON.stringify(event.detail)));
@@ -710,7 +721,7 @@ export default class AccountDatatable extends LightningElement {
     /**
      * @description       : It takes values and/or on filter criteria
      * @author            : Vrushabh Uprikar
-     * @last modified on  : 03-09-2021
+     * @last modified on  : 06-09-2021
     **/
     takeactionChnage(event) {
         this.takeActionConVal = JSON.parse(JSON.stringify(event.detail));
@@ -719,7 +730,7 @@ export default class AccountDatatable extends LightningElement {
     /**
      * @description       : It will undo the current changes
      * @author            : Vrushabh Uprikar
-     * @last modified on  : 03-09-2021
+     * @last modified on  : 06-09-2021
     **/
     handleCancel(e) {
         this.draftValues = [];
@@ -728,7 +739,7 @@ export default class AccountDatatable extends LightningElement {
     /**
   * @description       : Infinite Loading
   * @author            : Vrushabh Uprikar
-  * @last modified on  : 03-09-2021
+  * @last modified on  : 06-09-2021
  **/
     loadMoreData(event) {
         //console.log('Loadmore fired');
@@ -747,7 +758,7 @@ export default class AccountDatatable extends LightningElement {
      * @param             : strObjectApiName,strfieldSetName,limitSize
      * @return            : string
      * @author            : Vrushabh Uprikar
-     * @last modified on  : 03-09-2021
+     * @last modified on  : 06-09-2021
     **/
     loadData() {
         return getUpdatedDataOnly({
@@ -774,7 +785,7 @@ export default class AccountDatatable extends LightningElement {
     /**
      * @description       : For Infinite Scrolling in Pagination.
      * @author            : Vrushabh Uprikar
-     * @last modified on  : 03-09-2021
+     * @last modified on  : 06-09-2021
     **/
     /*setPaginationType() {
         if (this.PaginationType == 'Infinite_Scroll') {
@@ -791,7 +802,7 @@ export default class AccountDatatable extends LightningElement {
      * @description       : This handler is for Row Selection
      * @author            : Vrushabh Uprikar
      * @return 
-     * @last modified on  : 03-09-2021
+     * @last modified on  : 06-09-2021
     **/
     handleRowSelection(event) {
         let rowIds = [];
@@ -804,7 +815,7 @@ export default class AccountDatatable extends LightningElement {
     /**
      * @description       : It will deleting the record ids.
      * @author            : Vrushabh Uprikar
-     * @last modified on  : 03-09-2021
+     * @last modified on  : 06-09-2021
     **/
     deleteRecordBtn(event) {
         deleteRecords({ idlist: this.rowIds })

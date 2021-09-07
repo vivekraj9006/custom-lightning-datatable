@@ -6,7 +6,7 @@ public with sharing class picklistDatatableEditContoller
      * @param             : String strObjectApiName,String strfieldSetName,Integer limitSize,Integer offset
      * @return            : string,Integer
      * @author            : Vrushabh Uprikar
-     * @last modified on  : 03-09-2021
+     * @last modified on  : 06-09-2021
      * @last modified by  : Vrushabh Uprikar
     **/
     @AuraEnabled
@@ -26,7 +26,7 @@ public with sharing class picklistDatatableEditContoller
                 query += f.getFieldPath() + ', '; // getFieldPath() of FieldSetMember gives the fieldAPI which has been used to build SOQL query.
             }
             query += 'Id FROM ' + strObjectApiName ;
-            query += ' ORDER BY LastModifiedDate DESC LIMIT ' + ' OFFSET '+ offset ;
+            query += ' ORDER BY LastModifiedDate DESC LIMIT ' + ' OFFSET :'+ offset ;
 	        //execute query
             List<SObject> lstRecords = Database.query(query);
             //prepare a map which will hold fieldList and recordList and return it
@@ -41,7 +41,7 @@ public with sharing class picklistDatatableEditContoller
      * @param             : String strObjectApiName,String strfieldSetName,String dynamicLimit
      * @return            : string
      * @author            : Vivek Raj
-     * @last modified on  : 03-09-2021
+     * @last modified on  : 06-09-2021
      * @last modified by  : Vrushabh Uprikar
     **/
     @AuraEnabled(cacheable=false)
@@ -109,7 +109,7 @@ public with sharing class picklistDatatableEditContoller
      * @param             : String jSONSObject,String sObjectApiName
      * @return            : string
      * @author            : Vivek Raj
-     * @last modified on  : 03-09-2021
+     * @last modified on  : 06-09-2021
      * @last modified by  : Vrushabh Uprikar
     **/
     @AuraEnabled
@@ -182,7 +182,7 @@ public with sharing class picklistDatatableEditContoller
      * @param             : String objectApiName,String fieldApiName
      * @return            : string
      * @author            : Vrushabh Uprikar
-     * @last modified on  : 03-09-2021
+     * @last modified on  : 06-09-2021
      * @last modified by  : Vrushabh Uprikar
     **/
     public static Map<String,List<PickListWrap>> getPicklistOptions(String objectApiName, String fieldApiName)
@@ -223,14 +223,13 @@ public with sharing class picklistDatatableEditContoller
             this.label = label;
         }
     }
-    
 
     /**
      * @description       : updates the data when replace funtionality is called.
      * @param             : String strObjectApiName,String Record_Id,Replace_text,Replace_field,field_type
      * @return            : string
      * @author            : Vrushabh Uprikar
-     * @last modified on  : 03-09-2021
+     * @last modified on  : 06-09-2021
      * @last modified by  : Vrushabh Uprikar
     **/ 
     @AuraEnabled
@@ -288,7 +287,7 @@ public with sharing class picklistDatatableEditContoller
      * @param             : idlist
      * @return            : string
      * @author            : Vrushabh Uprikar
-     * @last modified on  : 03-09-2021
+     * @last modified on  : 06-09-2021
      * @last modified by  : Vrushabh Uprikar
     **/
     @AuraEnabled
@@ -305,7 +304,6 @@ public with sharing class picklistDatatableEditContoller
         }
     }
 
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public static Map<Schema.sObjectField, Map<String, List<PickListWrap>>> getDependentPicklistValues(Schema.sObjectField dependToken) 
     {
@@ -374,7 +372,6 @@ public with sharing class picklistDatatableEditContoller
         System.debug('D_values: ' + D_values);
         return D_values;
     }
-
 
     // by Vivek for geting map of dependency 
     public static Map<String, String> getDependencyMap(Schema.sObjectField dependToken)

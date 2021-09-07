@@ -5,7 +5,7 @@ export default class ExtendedDatatable extends LightningDatatable {
     static customTypes = {  
         picklist: {
             template: DatatablePicklistTemplate,
-            typeAttributes: ['label', 'placeholder', 'options', 'value','context', 'apiname','dependentvalue','dependentoption','childapi'],
+            typeAttributes: ['label', 'placeholder', 'options', 'value','context', 'apiname','dependentvalue','dependentoption','parentapi','isdependentflag','childlabel'],
             standardCellLayout: true,
         },
     };

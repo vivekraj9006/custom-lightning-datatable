@@ -12,20 +12,29 @@ export default class Picklist extends LightningElement {
 
     @api dependentoption;
     @api dependentvalue;
-    @api childapi;
-    @track disp_Opt=[];
+    @api parentapi;
+    @track disp_Opt = [];
+
+    @api isdependentflag;
+    @api childlabel;
+
+    childAPI = this.childlabel; // used for ppassing API value
+    C_LABEL; // for CHILD Lable on UI
 
     tempObj = { label: 'None', value: 'None' };
     /**
      * @description       : To Retrive And load the Picklist values.
      * @author            : Vivek Raj
-     * @last modified on  : 02-09-2021
+     * @last modified on  : 06-09-2021
     **/
     connectedCallback() {
 
-        console.log('dependentoption : ' + JSON.stringify(this.dependentoption));
-        console.log('dependentvalue : ' + JSON.stringify(this.dependentvalue));
-        console.log('child Api : ' + JSON.stringify(this.childapi));
+        console.log('childlabel with __c:', this.childlabel);
+        var newChildLable = this.childlabel;
+        newChildLable = newChildLable.replace('__c', '');
+        this.C_LABEL = newChildLable.replace('_', ' ');
+        console.log(' this.C_LABEL: without _ ', this.C_LABEL);
+
         if (this.value === undefined) {
             this.tempObj.isSelected = true;
         } else {
@@ -36,50 +45,53 @@ export default class Picklist extends LightningElement {
             Object.assign({}, option, { isSelected: areSame(option.value, this.value) }));
         this.options.unshift(this.tempObj);
 
-        console.log('this.dependentoption bfore: ', JSON.stringify(this.dependentoption));
-        if (this.value === undefined) {
-            this.tempObj.isSelected = true;
-            this.disp_Opt.push(this.tempObj);
-        }else{
-            this.disp_Opt = this.dependentoption[this.childapi][this.value];
+        if (this.isdependentflag) {
+            if (this.value === undefined) {
+                this.tempObj.isSelected = true;
+                this.disp_Opt.push(this.tempObj);
+            } else {
+                this.disp_Opt = this.dependentoption[this.parentapi][this.value];
+            }
         }
-
-    
-        console.log('this.options  ' + JSON.stringify(this.options));
-        console.log(' this.disp_Opt ' + JSON.stringify(this.disp_Opt));
-        console.log('this.dependentoption after: ', JSON.stringify(this.dependentoption));
     }
 
     /**
      * @description       : 
      * @author            : Vivek Raj
-     * @last modified on  : 02-09-2021
+     * @last modified on  : 06-09-2021
     **/
-    handleChange(event) 
-    {
+    handleChange(event) {
         //show the selected value on UI
         this.value = event.target.value;
-        console.log("Value from datatable is " + this.value)
-        console.log("Context of this value is : " + this.context);
-        let apinm = JSON.parse(JSON.stringify(this.apiname));
-        //console.log("apiname:" + apinm);
-        console.log('apiname', JSON.stringify(this.apiname));
-        //var dep_options = [];
-        //var final_dep_op = [];
-        // this.dependentoption.forEach(op => {
-        //     dep_options = Object.values(op);
-        // });
-        // console.log('dependent options' + JSON.stringify(dep_options));
+        let apiname = JSON.parse(JSON.stringify(this.apiname));
 
         if (this.value === 'None') {
             this.disp_Opt = [];
             this.tempObj.isSelected = true;
             this.disp_Opt.push(this.tempObj);
-        }else{
-            this.disp_Opt = this.dependentoption[this.childapi][this.value];        }
-       
-        console.log('this.disp_Opt', JSON.stringify(this.disp_Opt));
+            this.dependentvalue = 'None';
+        } else {
+            this.disp_Opt = this.dependentoption[this.parentapi][this.value];
+            this.dependentvalue = this.disp_Opt[0];
+            console.log("Dpend Value from datatable is 3  " + JSON.stringify(this.dependentvalue));
+            console.log('Context in dependent : ', this.context);
+            console.log('api in dependent : ', this.childlabel);
+            this.dispatchChnageValues(this.context, this.dependentvalue, this.childlabel);
+        }
 
+        this.dispatchChnageValues(this.context, this.value, apiname);
+    }
+
+    handleChangeDependent(event) {
+        //show the selected value on UI
+        this.dependentvalue = event.target.value;
+        this.dispatchChnageValues(this.context, this.dependentvalue, this.childlabel);
+        console.log("Dpend Value from datatable is 2  " + JSON.stringify(this.dependentvalue));
+        console.log('Context in dependent 2 : ', this.context);
+        console.log('api in dependent  2 : ', this.childlabel);
+    }
+
+    dispatchChnageValues(context, value, apiname) {
         //fire event to send context and selected value to the data table
         const pickListChangeEvent = new CustomEvent('picklistchanged', {
             composed: true,
@@ -87,9 +99,9 @@ export default class Picklist extends LightningElement {
             cancellable: true,
             detail: {
                 data: {
-                    context: this.context,
-                    value: this.value,
-                    apiname: apinm
+                    context: context,
+                    value: value,
+                    apiname: apiname
                 }
             }
         });
