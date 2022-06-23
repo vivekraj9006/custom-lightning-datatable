@@ -22,11 +22,7 @@ export default class Picklist extends LightningElement {
     C_LABEL; // for CHILD Lable on UI
 
     tempObj = { label: 'None', value: 'None' };
-    /**
-     * @description       : To Retrive And load the Picklist values.
-     * @author            : Vivek Raj
-     * @last modified on  : 06-09-2021
-    **/
+  
     connectedCallback() {
 
         console.log('childlabel with __c:', this.childlabel);
@@ -55,11 +51,7 @@ export default class Picklist extends LightningElement {
         }
     }
 
-    /**
-     * @description       : 
-     * @author            : Vivek Raj
-     * @last modified on  : 06-09-2021
-    **/
+ 
     handleChange(event) {
         //show the selected value on UI
         this.value = event.target.value;

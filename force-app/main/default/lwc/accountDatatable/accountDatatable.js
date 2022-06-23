@@ -48,11 +48,7 @@ export default class AccountDatatable extends LightningElement {
     dynamicLimit = 0;
     rowIds = []; // Collect row Ids for deletion
     depval_list = {};
-    /**
-     * @description       : For calling getFieldSetAndRecords method /returning table data,coloumn data, picklist value initially 
-     * @author            : Vrushabh Uprikar
-     * @last modified on  : 06-09-2021
-    **/
+ 
     connectedCallback() {
         getFieldSetAndRecords({
             strObjectApiName: this.SFDCobjectApiName,
@@ -231,13 +227,7 @@ export default class AccountDatatable extends LightningElement {
                 this.allData = undefined;
             });
     }
-    /**
-     * @description       : For Updating Picklist values on Change event
-     * @author            : Vrushabh Uprikar
-     * @last modified on  : 06-09-2021
-     * 
-     * Calling this method from picklist.js CHILD Component
-    **/
+
     picklistChanged(event) {
         event.stopPropagation();
         let dataRecieved = event.detail.data;
@@ -248,11 +238,7 @@ export default class AccountDatatable extends LightningElement {
         };
         this.updateDraftValues(picklistObj);
     }
-    /**
-     * @description       : Handlsave event to save Edit draftvalues and Record Insert save button
-     * @author            : Vrushabh Uprikar
-     * @last modified on  : 06-09-2021
-    **/
+
     async handleSave(event) {
         let copyDraftValues = this.draftValues;
         copyDraftValues.forEach((item) => {
@@ -287,21 +273,13 @@ export default class AccountDatatable extends LightningElement {
                 );
             });
     }
-    /**
-     * @description       : This method is for updating the draft values on Cell change 
-     * @author            : Vrushabh Uprikar
-     * @last modified on  : 06-09-2021
-    **/
+  
     handleCellChange(event) {
         event.preventDefault();
         this.updateDraftValues(event.detail.draftValues[0]);
         console.log('DraftValues handleCellChange ' + JSON.stringify(event.detail.draftValues));
     }
-    /**
-     * @description       : This method is for updating the draft values
-     * @author            : Vrushabh Uprikar
-     * @last modified on  : 06-09-2021
-    **/
+ 
     async updateDraftValues(updateItem) {
         let draftValueChanged = false;
         let copyDraftValues = JSON.parse(JSON.stringify(this.draftValues));
@@ -322,11 +300,7 @@ export default class AccountDatatable extends LightningElement {
         console.log('UpdateddraftValues :', JSON.stringify(this.draftValues));
         console.log('this.allData After Draft:', JSON.parse(JSON.stringify(this.allData)));
     }
-    /**
-     * @description       : This method will call on Add row Button Click and will add blank row on top of DataTable
-     * @author            : Vrushabh Uprikar
-     * @last modified on  : 06-09-2021
-    **/
+  
     addRow() {
         this.isNewRec = true;
         console.log("add row function called");
@@ -350,13 +324,7 @@ export default class AccountDatatable extends LightningElement {
         console.log('this.allData After :', JSON.parse(JSON.stringify(this.allData)));
         this.AddButonCounter = this.AddButonCounter + 1;
     }
-    /**
-     * @description       : This function returns updated table data.
-     * @param             : strObjectApiName,strfieldSetName,limitSize
-     * @return            : string
-     * @author            : Vrushabh Uprikar
-     * @last modified on  : 06-09-2021
-    **/
+ 
     getUpdatedData() {
         getUpdatedDataOnly({
             strObjectApiName: this.SFDCobjectApiName,
@@ -376,11 +344,7 @@ export default class AccountDatatable extends LightningElement {
                 console.log('this.error', this.error);
             });
     }
-    /**
-     * @description       : It change Input as per Field type.
-     * @author            : Vrushabh Uprikar
-     * @last modified on  : 06-09-2021
-    **/
+ 
     handleChangeFields(event) {
         // on chnage of combobox value
         this.fieldOption = event.target.value;
@@ -419,11 +383,7 @@ export default class AccountDatatable extends LightningElement {
         // combobox option set
         return this.fieldOptionJSON;
     }
-    /**
-     * @description       : This method collects search key
-     * @author            : Vrushabh Uprikar
-     * @last modified on  : 06-09-2021
-    **/
+ 
     handleKeyChange(event) {
         try {
             this.searchKey = event.target.value;
@@ -441,20 +401,12 @@ export default class AccountDatatable extends LightningElement {
             console.log('error in handle Key Change :', error);
         }
     }
-    /**
-     * @description       : It takes key change value for replace text
-     * @author            : Vrushabh Uprikar
-     * @last modified on  : 06-09-2021
-    **/
+  
     handelonchange(event) {
         this.replacetext = event.target.value;
         //console.log('replacetext', JSON.stringify(replacetext));
     }
-    /**
-     * @description       : Collects replace text send it to the database
-     * @author            : Vrushabh Uprikar
-     * @last modified on  : 06-09-2021
-    **/
+  
     // onClick Replace
     async handleReplace() {
         if (this.isSearchFlag && (this.replacetext != '' || this.replacetext == null)) {
@@ -519,13 +471,7 @@ export default class AccountDatatable extends LightningElement {
             this.dispatchEvent(evt);
         }
     }
-    /**
-     * @description       : Perform search on the datatable
-     * @param             : searchString,allRecords,searchResults,fieldDataType
-     * @return            : string
-     * @author            : Vrushabh Uprikar
-     * @last modified on  : 06-09-2021
-    **/
+
     searchDataTable() {
         let searchString = this.searchKey;
         let allRecords = this.allDataOrgCopy;
@@ -548,11 +494,7 @@ export default class AccountDatatable extends LightningElement {
         }
         this.allData = searchResults;
     }
-    /**
-     * @description       : It filters datatable based on child filter component criteria
-     * @author            : Vrushabh Uprikar
-     * @last modified on  : 06-09-2021
-    **/
+ 
     filterCriteriaChange(event) {
         var filterCriteriaList = (JSON.parse(JSON.stringify(event.detail)));
         console.table(JSON.parse(JSON.stringify(filterCriteriaList)));
@@ -718,29 +660,17 @@ export default class AccountDatatable extends LightningElement {
             });
         }
     }
-    /**
-     * @description       : It takes values and/or on filter criteria
-     * @author            : Vrushabh Uprikar
-     * @last modified on  : 06-09-2021
-    **/
+ 
     takeactionChnage(event) {
         this.takeActionConVal = JSON.parse(JSON.stringify(event.detail));
         console.log('takeActionConVal:', this.takeActionConVal);
     }
-    /**
-     * @description       : It will undo the current changes
-     * @author            : Vrushabh Uprikar
-     * @last modified on  : 06-09-2021
-    **/
+  
     handleCancel(e) {
         this.draftValues = [];
         this.allData = this.allDataOrgCopy;
     }
-    /**
-  * @description       : Infinite Loading
-  * @author            : Vrushabh Uprikar
-  * @last modified on  : 06-09-2021
- **/
+
     loadMoreData(event) {
         //console.log('Loadmore fired');
         if (this.isInfinScroll) {
@@ -753,13 +683,7 @@ export default class AccountDatatable extends LightningElement {
                 });
         }
     }
-    /**
-     * @description       : For loading Updated Data
-     * @param             : strObjectApiName,strfieldSetName,limitSize
-     * @return            : string
-     * @author            : Vrushabh Uprikar
-     * @last modified on  : 06-09-2021
-    **/
+ 
     loadData() {
         return getUpdatedDataOnly({
             strObjectApiName: this.SFDCobjectApiName,
@@ -782,11 +706,7 @@ export default class AccountDatatable extends LightningElement {
             });
     }
 
-    /**
-     * @description       : For Infinite Scrolling in Pagination.
-     * @author            : Vrushabh Uprikar
-     * @last modified on  : 06-09-2021
-    **/
+ 
     /*setPaginationType() {
         if (this.PaginationType == 'Infinite_Scroll') {
             this.isStdPagination = false;
@@ -798,12 +718,7 @@ export default class AccountDatatable extends LightningElement {
  
     }*/
 
-    /**
-     * @description       : This handler is for Row Selection
-     * @author            : Vrushabh Uprikar
-     * @return 
-     * @last modified on  : 06-09-2021
-    **/
+
     handleRowSelection(event) {
         let rowIds = [];
         let selectedRows = event.detail.selectedRows;
@@ -812,11 +727,7 @@ export default class AccountDatatable extends LightningElement {
         this.rowIds = rowIds;
     }
 
-    /**
-     * @description       : It will deleting the record ids.
-     * @author            : Vrushabh Uprikar
-     * @last modified on  : 06-09-2021
-    **/
+  
     deleteRecordBtn(event) {
         deleteRecords({ idlist: this.rowIds })
             .then(() => {

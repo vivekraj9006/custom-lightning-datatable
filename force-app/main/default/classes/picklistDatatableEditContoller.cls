@@ -1,14 +1,6 @@
 public with sharing class picklistDatatableEditContoller
 {
 
-    /**
-     * @description       : Method is used for updating the record after datatable is updated
-     * @param             : String strObjectApiName,String strfieldSetName,Integer limitSize,Integer offset
-     * @return            : string,Integer
-     * @author            : Vrushabh Uprikar
-     * @last modified on  : 06-09-2021
-     * @last modified by  : Vrushabh Uprikar
-    **/
     @AuraEnabled
     public static string getUpdatedDataOnly(String strObjectApiName, String strfieldSetName, Integer offset)
     {
@@ -36,14 +28,6 @@ public with sharing class picklistDatatableEditContoller
         return null; // will return null if ObjectApi and FieldSet not found
     }
 
-    /**
-     * @description       : returns initial Records, coloums And Picklist values in the map format
-     * @param             : String strObjectApiName,String strfieldSetName,String dynamicLimit
-     * @return            : string
-     * @author            : Vivek Raj
-     * @last modified on  : 06-09-2021
-     * @last modified by  : Vrushabh Uprikar
-    **/
     @AuraEnabled(cacheable=false)
     public static String getFieldSetAndRecords(String strObjectApiName, String strfieldSetName, String dynamicLimit)
     {
@@ -104,14 +88,7 @@ public with sharing class picklistDatatableEditContoller
         return null; // will return null if ObjectApi and FieldSet not found
     }
 
-    /**
-     * @description       : Its updates the draft values in the inline editing datable
-     * @param             : String jSONSObject,String sObjectApiName
-     * @return            : string
-     * @author            : Vivek Raj
-     * @last modified on  : 06-09-2021
-     * @last modified by  : Vrushabh Uprikar
-    **/
+
     @AuraEnabled
     public static String upsertSOBJRecord(String jSONSObject, String sObjectApiName)
     {
@@ -177,14 +154,7 @@ public with sharing class picklistDatatableEditContoller
         }
     }
 
-    /**
-     * @description       : Getting the Picklist values from the fieldset
-     * @param             : String objectApiName,String fieldApiName
-     * @return            : string
-     * @author            : Vrushabh Uprikar
-     * @last modified on  : 06-09-2021
-     * @last modified by  : Vrushabh Uprikar
-    **/
+
     public static Map<String,List<PickListWrap>> getPicklistOptions(String objectApiName, String fieldApiName)
     { // Eg. Account, Type(FieldApiName)
 
@@ -224,14 +194,7 @@ public with sharing class picklistDatatableEditContoller
         }
     }
 
-    /**
-     * @description       : updates the data when replace funtionality is called.
-     * @param             : String strObjectApiName,String Record_Id,Replace_text,Replace_field,field_type
-     * @return            : string
-     * @author            : Vrushabh Uprikar
-     * @last modified on  : 06-09-2021
-     * @last modified by  : Vrushabh Uprikar
-    **/ 
+
     @AuraEnabled
     public static String updateRecords(String strObjectApiName, String Record_Id, 
                                     String Replace_text, String Replace_field, String field_type)
@@ -282,14 +245,7 @@ public with sharing class picklistDatatableEditContoller
         return 'Something Went Wrong';
     }
 
-    /**
-     * @description       : Funtionality is used for deleting the Records.
-     * @param             : idlist
-     * @return            : string
-     * @author            : Vrushabh Uprikar
-     * @last modified on  : 06-09-2021
-     * @last modified by  : Vrushabh Uprikar
-    **/
+
     @AuraEnabled
     public static string deleteRecords(List<Id> idlist)
     {
